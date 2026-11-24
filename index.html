@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HUMBA</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,Helvetica,sans-serif}
+body{background:#fdf6ec;color:#222}
+a{color:#d35400;text-decoration:none}
+a:hover{text-decoration:underline}
+button{cursor:pointer}
+input,textarea,select{font-size:14px}
+/* ===== Header ===== */
+.topbar{background:#d35400;color:#fff;padding:8px 12px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:20;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.logo{display:flex;align-items:center;gap:8px;cursor:pointer;flex:none}
+.logo svg{width:34px;height:34px;flex:none}
+.logo-nama{line-height:1.05}
+.logo-nama b{font-size:20px;letter-spacing:.5px}
+.logo-nama small{display:block;font-size:11px;opacity:.9;font-style:italic}
+.topbar .cari{flex:1;max-width:340px;display:flex;gap:6px}
+.topbar .cari input{flex:1;padding:7px 10px;border:0;border-radius:4px;outline:none}
+.topbar .cari button{background:#a04000;color:#fff;border:0;border-radius:4px;padding:0 12px;font-weight:bold}
+.topbar .kanan{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:13px;white-space:nowrap}
+.topbar .kanan .nama{font-weight:bold}
+.badge{background:#fff;color:#d35400;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:bold}
+/* ===== Layout 3 kolom ===== */
+.layout{max-width:1080px;margin:0 auto;display:flex;gap:14px;padding:14px 10px;align-items:flex-start}
+.kolom-kiri{width:190px;flex:none;position:sticky;top:64px}
+.kolom-kanan{width:250px;flex:none;position:sticky;top:64px}
+.kolom-tengah{flex:1;min-width:0}
+@media(max-width:900px){.kolom-kanan{display:none}}
+@media(max-width:680px){.layout{flex-direction:column}.kolom-kiri{width:100%;position:static}.kolom-kiri .nav{display:flex;flex-wrap:wrap;gap:4px}.kolom-kiri .nav button{flex:1}}
+/* ===== Panel & kartu ===== */
+.panel{background:#fff;border:1px solid #e8d9c0;border-radius:6px;margin-bottom:12px;overflow:hidden}
+.panel h3{background:#fdebd0;color:#7e5109;font-size:13px;padding:8px 12px;border-bottom:1px solid #f5d7a1}
+.panel .isi{padding:10px 12px;font-size:13px;line-height:1.5}
+.nav button{display:block;width:100%;text-align:left;background:none;border:0;padding:9px 12px;font-size:14px;color:#333;border-left:3px solid transparent}
+.nav button:hover{background:#fdf0d5}
+.nav button.aktif{background:#fdebd0;border-left-color:#d35400;font-weight:bold;color:#d35400}
+.nav button .jml{float:right;background:#d35400;color:#fff;border-radius:10px;padding:0 7px;font-size:11px}
+.kartu{background:#fff;border:1px solid #e8d9c0;border-radius:6px;padding:12px;margin-bottom:12px}
+.kartu h2{font-size:17px;margin-bottom:8px;color:#7e5109}
+.kartu h4{font-size:14px;margin:10px 0 6px;color:#7e5109}
+.muted{color:#888;font-size:12px}
+.kecil{font-size:12px}
+/* ===== Avatar & nama ===== */
+.avatar{width:44px;height:44px;border-radius:6px;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:bold;font-size:18px;flex:none}
+.avatar.kecil{width:32px;height:32px;font-size:14px;border-radius:5px}
+.avatar.besar{width:72px;height:72px;font-size:30px;border-radius:8px}
+.baris{display:flex;gap:10px;align-items:flex-start}
+.baris-tengah{display:flex;gap:10px;align-items:center}
+.nama{font-weight:bold;color:#d35400}
+/* ===== Komposer & status ===== */
+.komposer textarea{width:100%;min-height:64px;padding:10px;border:1px solid #e0cba8;border-radius:6px;resize:vertical;outline:none}
+.komposer textarea:focus{border-color:#e67e22}
+.tombol{background:#d35400;color:#fff;border:0;border-radius:5px;padding:8px 16px;font-weight:bold;font-size:14px}
+.tombol:hover{background:#ba4a00}
+.tombol.abu{background:#888}
+.tombol.abu:hover{background:#777}
+.tombol.hijau{background:#27ae60}
+.tombol.hijau:hover{background:#219150}
+.tombol.kecil{padding:5px 10px;font-size:12px}
+.tombol:disabled{opacity:.5;cursor:default}
+.status{border-bottom:1px solid #f0e2c8;padding:12px 0}
+.status:last-child{border-bottom:0}
+.status .teks{font-size:14px;line-height:1.5;margin:6px 0;white-space:pre-wrap;word-break:break-word}
+.aksi{font-size:12px;color:#888;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.aksi button{background:none;border:0;color:#d35400;font-size:12px;padding:0}
+.aksi button:hover{text-decoration:underline}
+.aksi button.suka-aktif{font-weight:bold}
+.komentar{background:#fdf6ec;border-radius:6px;padding:8px 10px;margin:8px 0 0 0;font-size:13px}
+.komentar .teks{margin-top:2px;white-space:pre-wrap;word-break:break-word}
+.komen-form{display:flex;gap:6px;margin-top:8px}
+.komen-form input{flex:1;padding:7px 9px;border:1px solid #e0cba8;border-radius:5px;outline:none}
+.komen-form button{background:#e67e22;color:#fff;border:0;border-radius:5px;padding:0 12px;font-weight:bold}
+/* ===== Daftar teman / pengguna ===== */
+.item-pengguna{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #f0e2c8}
+.item-pengguna:last-child{border-bottom:0}
+.item-pengguna .info{flex:1;min-width:0}
+.item-pengguna .info .sub{font-size:12px;color:#888;margin-top:2px;white-space:pre-wrap;word-break:break-word}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block;vertical-align:middle}
+.dot.on{background:#27ae60;animation:denyut 1.2s infinite ease-out}
+.dot.off{background:#bbb}
+@keyframes denyut{0%{transform:scale(.8);opacity:1}75%{transform:scale(1.5);opacity:0}100%{transform:scale(.8);opacity:0}}
+/* ===== Chat ===== */
+.chat-wrap{display:flex;flex-direction:column;height:480px}
+.chat-area{flex:1;overflow-y:auto;padding:10px;background:#fdf6ec;border:1px solid #f0e2c8;border-radius:6px;margin-bottom:8px}
+.gelembung{max-width:78%;padding:8px 11px;border-radius:10px;font-size:14px;line-height:1.4;margin:6px 0;white-space:pre-wrap;word-break:break-word}
+.gelembung.kirim{background:#fdebd0;margin-left:auto;border-bottom-right-radius:3px}
+.gelembung.terima{background:#fff;border:1px solid #e8d9c0;margin-right:auto;border-bottom-left-radius:3px}
+.gelembung .waktu{font-size:11px;color:#999;text-align:right;margin-top:3px}
+.chat-input{display:flex;gap:8px}
+.chat-input input{flex:1;padding:10px;border:1px solid #e0cba8;border-radius:6px;outline:none}
+.poke-banner{background:#d35400;color:#fff;padding:10px 14px;border-radius:6px;font-weight:bold;margin-bottom:10px;animation:kedip 1s infinite}
+@keyframes kedip{50%{opacity:.6}}
+/* ===== Auth ===== */
+.auth-wrap{max-width:430px;margin:40px auto;padding:0 12px}
+.auth-kartu{background:#fff;border:1px solid #e8d9c0;border-radius:8px;padding:22px;box-shadow:0 4px 18px rgba(0,0,0,.12)}
+.auth-logo{text-align:center;margin-bottom:14px}
+.auth-logo svg{width:84px;height:84px}
+.auth-logo h1{font-size:26px;color:#d35400;margin-top:6px}
+.auth-logo p{color:#888;font-size:13px;font-style:italic}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:13px;color:#666;margin-bottom:4px}
+.field input,.field textarea,.field select{width:100%;padding:11px;border:1px solid #ddd;border-radius:6px;outline:none;background:#fff}
+.field input:focus,.field textarea:focus{border-color:#e67e22}
+.field textarea{min-height:80px;resize:vertical}
+.tombol-penuh{width:100%;padding:12px;font-size:15px;margin-top:4px}
+.pesan-info{font-size:13px;padding:10px 12px;border-radius:6px;margin-bottom:12px;line-height:1.5}
+.pesan-info.kuning{background:#fef9e7;border:1px solid #f9e79f;color:#7d6608}
+.pesan-info.merah{background:#fdedec;border:1px solid #f5b7b1;color:#922b21}
+.pesan-info.hijau{background:#eafaf1;border:1px solid #a9dfbf;color:#1e8449}
+.tengah{text-align:center}
+.link-kecil{font-size:13px}
+/* ===== Grup & catatan ===== */
+.chip{display:inline-block;background:#fdebd0;color:#7e5109;border-radius:12px;padding:2px 10px;font-size:12px;margin:2px 4px 2px 0}
+.daftar-grup{cursor:pointer}
+.daftar-grup:hover{background:#fdf6ec}
+textarea.editor-catatan{width:100%;min-height:220px;padding:12px;border:1px solid #e0cba8;border-radius:6px;resize:vertical;outline:none;line-height:1.6}
+.judul-catatan{font-size:15px;font-weight:bold}
+</style>
+</head>
+<body>
+
+<!-- ================= LAYAR MASUK / DAFTAR ================= -->
+<div id="layarAuth" style="display:none">
+  <div class="auth-wrap">
+    <div class="auth-kartu">
+      <div class="auth-logo">
+        <svg viewBox="0 0 100 100" aria-label="Logo HUMBA"><rect x="10" y="14" width="80" height="72" rx="8" fill="#d35400"/><rect x="18" y="22" width="64" height="56" rx="4" fill="#fdf6ec"/><path d="M50 22 V78" stroke="#e67e22" stroke-width="2"/><g stroke="#b9770e" stroke-width="2" stroke-linecap="round"><path d="M24 32 H44"/><path d="M24 42 H44"/><path d="M24 52 H44"/><path d="M56 32 H76"/><path d="M56 42 H76"/><path d="M56 52 H76"/></g><rect x="66" y="58" width="26" height="7" rx="3.5" fill="#2e86c1" transform="rotate(-32 79 61)"/><path d="M64 70 L60 78 L70 74 Z" fill="#1a5276" transform="rotate(-32 65 74)"/></svg>
+        <h1>HUMBA</h1>
+        <p>Medsos khusus Sumba — kembali ke masa sederhana</p>
+      </div>
+      <div id="authInfo"></div>
+      <div class="field"><label>Username (3–20 karakter, huruf kecil, angka, titik, _)</label><input id="inUser" placeholder="contoh: andi09" autocomplete="username"></div>
+      <div class="field" id="fieldNama" style="display:none"><label>Nama tampilan</label><input id="inNama" placeholder="contoh: Andi"></div>
+      <div class="field"><label>Password (min. 4 karakter)</label><input id="inPass" type="password" placeholder="••••" autocomplete="current-password"></div>
+      <div class="field" id="fieldTgl" style="display:none"><label>Tanggal lahir (untuk pengingat ulang tahun)</label><input id="inTgl" type="date"></div>
+      <button class="tombol tombol-penuh" id="btnMasuk" onclick="masuk()">Masuk</button>
+      <button class="tombol tombol-penuh hijau" id="btnDaftar" onclick="daftar()">Daftar Akun Baru</button>
+      <p class="tengah kecil" style="margin-top:10px"><a href="#" onclick="toggleModeDaftar(event)">Daftar hanya pakai username, nama, dan password. Tanpa email, tanpa nomor HP.</a></p>
+      <div id="authMode" style="display:none;margin-top:12px"></div>
+      <details style="margin-top:14px;font-size:12px;color:#888">
+        <summary>Pengaturan Supabase (untuk sinkron antar HP)</summary>
+        <p style="margin-top:6px;line-height:1.5">Supabase URL sudah diisi dan kunci anon sudah ditanam di aplikasi, jadi kamu tidak perlu mengisi apa-apa. Kalau mau mengganti kunci, tempel anon public key dari dashboard Supabase kamu (Settings → API) di bawah ini. Kunci yang ditempel tersimpan hanya di HP ini dan menggantikan kunci bawaan.</p>
+        <input id="inKunci" placeholder="eyJhbGciOi… (anon key)" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:6px;margin-top:6px">
+        <button class="tombol abu tombol-penuh" style="margin-top:6px" onclick="simpanKunci()">Simpan Kunci</button>
+        <p style="margin-top:8px;line-height:1.5">Belum ada tabel di Supabase? Jalankan file <b>supabase/schema.sql</b> dari repo ini di SQL Editor, dan pastikan Confirm email di Authentication → Settings sudah mati. Kalau tidak diisi, aplikasi jalan dalam Mode Lokal (demo, hanya di HP ini).</p>
+        <button class="tombol tombol-penuh" style="background:#b45309;margin-top:6px" onclick="cobaModeLokal()">Coba Mode Lokal (demo)</button>
+      </details>
+    </div>
+  </div>
+</div>
+
+<!-- ================= APLIKASI UTAMA ================= -->
+<div id="layarApp" style="display:none">
+  <div class="topbar">
+    <div class="logo" onclick="tampil('beranda')">
+      <svg viewBox="0 0 100 100" aria-label="Logo HUMBA"><rect x="10" y="14" width="80" height="72" rx="8" fill="#fff"/><rect x="18" y="22" width="64" height="56" rx="4" fill="#fdf6ec"/><path d="M50 22 V78" stroke="#e67e22" stroke-width="2"/><g stroke="#b9770e" stroke-width="2" stroke-linecap="round"><path d="M24 32 H44"/><path d="M24 42 H44"/><path d="M24 52 H44"/><path d="M56 32 H76"/><path d="M56 42 H76"/><path d="M56 52 H76"/></g><rect x="66" y="58" width="26" height="7" rx="3.5" fill="#2e86c1" transform="rotate(-32 79 61)"/><path d="M64 70 L60 78 L70 74 Z" fill="#1a5276" transform="rotate(-32 65 74)"/></svg>
+      <div class="logo-nama"><b>HUMBA</b></div>
+    </div>
+    <div class="cari"><input id="inCari" placeholder="Cari teman…" onkeydown="if(event.key==='Enter')cariTeman()"><button onclick="cariTeman()">Cari</button></div>
+    <div class="kanan">
+      <span id="pokeTop"></span>
+      <span id="pesanTop"></span>
+      <span class="nama" id="namaTop"></span>
+      <a href="#" style="color:#fff" onclick="keluar(event)">Keluar</a>
+    </div>
+  </div>
+  <div class="layout">
+    <div class="kolom-kiri">
+      <div class="panel nav" id="navKiri">
+        <button data-v="beranda" onclick="tampil('beranda')">🏠 Beranda</button>
+        <button data-v="profil" onclick="tampil('profil')">👤 Profil Saya</button>
+        <button data-v="pesan" onclick="tampil('pesan')">✉️ Pesan Masuk <span class="jml" id="jmlPesan" style="display:none"></span></button>
+        <button data-v="teman" onclick="tampil('teman')">👥 Teman <span class="jml" id="jmlTeman" style="display:none"></span></button>
+        <button data-v="grup" onclick="tampil('grup')">👨‍👩‍👧‍👦 Grup</button>
+        <button data-v="catatan" onclick="tampil('catatan')">📒 Catatan</button>
+      </div>
+      <div class="panel"><h3>Profil Saya</h3><div class="isi" id="panelProfil"></div></div>
+    </div>
+    <div class="kolom-tengah" id="tengah"></div>
+    <div class="kolom-kanan">
+      <div class="panel"><h3>🟢 Sedang Online</h3><div class="isi" id="panelOnline"><span class="muted">Memuat…</span></div></div>
+      <div class="panel"><h3>🎂 Ulang Tahun</h3><div class="isi" id="panelUltah"><span class="muted">Memuat…</span></div></div>
+      <div class="panel"><h3>👆 Poke</h3><div class="isi" id="panelPoke"><span class="muted">Tidak ada poke.</span></div></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/dist/umd/supabase.min.js"></script>
+<script>
+"use strict";
+/* ============================================================
+   HUMBA v1.0 — jejaring sosial nostalgia (Supabase)
+   Daftar hanya pakai username + nama + password (tanpa email).
+   Auth memakai email buatan username@humba.local.
+   ============================================================ */
+
+/* ---------- Bantuan ---------- */
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const WARNA_AVATAR = ["#d35400","#e67e22","#27ae60","#2980b9","#8e44ad","#c0392b","#16a085","#7d3c98"];
+const warnaAvatar = (nama) => { let h = 0; for (const c of String(nama)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return WARNA_AVATAR[h % WARNA_AVATAR.length]; };
+const avatarHtml = (p, cls) => `<span class="avatar ${cls||""}" style="background:${p.avatar_color||warnaAvatar(p.display_name||p.username)}">${esc((p.display_name||p.username||"?")[0].toUpperCase())}</span>`;
+const tglIndo = (d) => { try { return new Date(d).toLocaleDateString("id-ID",{day:"numeric",month:"long",year:"numeric"}); } catch(e){ return String(d||""); } };
+const waktuRelatif = (iso) => { const s = Math.floor((Date.now()-new Date(iso).getTime())/1000); if (s < 60) return "baru saja"; if (s < 3600) return Math.floor(s/60)+" mnt lalu"; if (s < 86400) return Math.floor(s/3600)+" jam lalu"; const h = Math.floor(s/86400); if (h < 30) return h+" hari lalu"; return tglIndo(iso); };
+const jamSingkat = (iso) => { try { return new Date(iso).toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit"}); } catch(e){ return ""; } };
+const uidBaru = () => (crypto.randomUUID ? crypto.randomUUID() : "id-" + Date.now() + "-" + Math.random().toString(36).slice(2));
+const USERNAME_OK = /^[a-z0-9._]{3,20}$/;
+const bunyiPoke = () => { try { const C = window.AudioContext || window.webkitAudioContext; if (!C) return; const c = new C(); const o = c.createOscillator(), g = c.createGain(); o.connect(g); g.connect(c.destination); o.frequency.value = 880; g.gain.setValueAtTime(.15, c.currentTime); o.start(); o.stop(c.currentTime + .18); setTimeout(()=>{ const o2 = c.createOscillator(); o2.connect(g); o2.frequency.value = 660; o2.start(); o2.stop(c.currentTime + .18); }, 200); } catch(e){} };
+const getar = () => { try { if (navigator.vibrate) navigator.vibrate([120, 60, 120]); } catch(e){} };
+
+/* ---------- Supabase ---------- */
+const SUPABASE_URL = "https://ubuqxmxkseoslxzruugr.supabase.co";
+const DEFAULT_ANON_KEY = "sb_publishable_B1ULvoanz9aKSadMN6-C9w_B6wgclF7"; // kunci anon bawaan (publishable) — proyek sama dengan Pos-El
+function getAnonKey(){
+  try { const l = localStorage.getItem("ch.anonkey"); if (l && l.trim()) return l.trim(); } catch(e){}
+  return (typeof DEFAULT_ANON_KEY === "string" ? DEFAULT_ANON_KEY.trim() : "");
+}
+let sb = null, mode = "cloud", me = null, sesiLokal = null;
+async function initSupabase(){
+  try {
+    let createClient = window.supabase && window.supabase.createClient;
+    if (!createClient) { const m = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm"); createClient = m.createClient; }
+    const key = getAnonKey();
+    if (!key) return false;
+    sb = createClient(SUPABASE_URL, key);
+    const { error } = await sb.from("humba_profiles").select("id").limit(1);
+    if (error) { console.warn("Supabase belum siap:", error.message); return false; }
+    return true;
+  } catch(e){ console.warn("Supabase gagal dimuat:", e); return false; }
+}
+function infoAuth(html){ const el = $("authInfo"); if (el) el.innerHTML = html; }
+function simpanKunci(){
+  const k = ($("inKunci").value || "").trim();
+  if (!k) { infoAuth(`<div class="pesan-info merah">Tempel dulu anon public key-nya.</div>`); return; }
+  try { localStorage.setItem("ch.anonkey", k); } catch(e){}
+  infoAuth(`<div class="pesan-info hijau">Kunci tersimpan di HP ini. Silakan daftar / masuk.</div>`);
+}
+async function cobaModeLokal(){
+  mode = "local"; sb = null;
+  infoAuth(`<div class="pesan-info kuning">Mode Lokal aktif (demo, hanya di HP ini). Daftar akun lokal di bawah.</div>`);
+  tampilAuth();
+}
+
+/* ---------- Penyimpanan lokal (Mode Lokal) ---------- */
+function muatLokal(){
+  try { return JSON.parse(localStorage.getItem("ch_local") || "{}"); }
+  catch(e){ return {}; }
+}
+function simpanLokal(d){ try { localStorage.setItem("ch_local", JSON.stringify(d)); } catch(e){} }
+function dbLokal(){
+  const d = muatLokal();
+  for (const k of ["users","posts","comments","likes","friends","groups","members","gposts","notes","messages","pokes"])
+    if (!Array.isArray(d[k])) d[k] = [];
+  return d;
+}
+const sekarang = () => new Date().toISOString();
+
+/* ---------- Auth ---------- */
+let modeDaftar = false;
+function toggleModeDaftar(e){ if (e) e.preventDefault(); modeDaftar = !modeDaftar; tampilAuth(); }
+function tampilAuth(){
+  $("layarAuth").style.display = "block"; $("layarApp").style.display = "none";
+  $("fieldNama").style.display = modeDaftar ? "block" : "none";
+  $("fieldTgl").style.display = modeDaftar ? "block" : "none";
+  $("btnMasuk").style.display = modeDaftar ? "none" : "block";
+  $("btnDaftar").style.display = modeDaftar ? "block" : "none";
+  $("authMode").style.display = "block";
+  $("authMode").innerHTML = modeDaftar
+    ? `<div class="pesan-info kuning">Mode daftar: isi username, nama tampilan, password, dan tanggal lahir (opsional). Setelah daftar, kamu langsung masuk.</div>`
+    : `<div class="pesan-info kuning">Mode masuk: isi username dan password akunmu.</div>`;
+}
+async function daftar(){
+  const username = ($("inUser").value || "").trim().toLowerCase();
+  const nama = ($("inNama").value || "").trim();
+  const pass = $("inPass").value || "";
+  const tgl = $("inTgl").value || null;
+  if (!USERNAME_OK.test(username)) { infoAuth(`<div class="pesan-info merah">Username harus 3–20 karakter: huruf kecil, angka, titik, atau _.</div>`); return; }
+  if (nama.length < 2 || nama.length > 32) { infoAuth(`<div class="pesan-info merah">Nama tampilan 2–32 karakter.</div>`); return; }
+  if (pass.length < 4) { infoAuth(`<div class="pesan-info merah">Password minimal 4 karakter.</div>`); return; }
+  const btn = $("btnDaftar"); btn.disabled = true; btn.textContent = "Mendaftar…";
+  try {
+    if (mode === "local") {
+      const d = dbLokal();
+      if (d.users.some((u) => u.username === username)) { infoAuth(`<div class="pesan-info merah">Username sudah dipakai. Pilih username lain.</div>`); return; }
+      const u = { id: uidBaru(), username, display_name: nama, bio: "", birthdate: tgl, avatar_color: warnaAvatar(nama), last_seen: sekarang(), created_at: sekarang(), pass };
+      d.users.push(u); simpanLokal(d);
+      sesiLokal = u.id; me = profilLokal(u); masukAplikasi();
+      return;
+    }
+    const email = username + "@humba.local";
+    const { data, error } = await sb.auth.signUp({ email, password: pass });
+    if (error) { infoAuth(`<div class="pesan-info merah">Gagal daftar: ${esc(error.message)}</div>`); return; }
+    const uid = data.user && data.user.id;
+    if (!uid) { infoAuth(`<div class="pesan-info merah">Gagal daftar: tidak ada sesi. Coba masuk.</div>`); return; }
+    const { error: e2 } = await sb.from("humba_profiles").insert({ id: uid, username, display_name: nama, bio: "", birthdate: tgl, avatar_color: warnaAvatar(nama), last_seen: sekarang() });
+    if (e2) { infoAuth(`<div class="pesan-info merah">Akun auth dibuat tapi profil gagal: ${esc(e2.message)}. Coba masuk — kalau tetap gagal, beri tahu admin.</div>`); return; }
+    await muatProfilCloud(uid);
+    masukAplikasi();
+  } catch(e){ infoAuth(`<div class="pesan-info merah">Gagal daftar: ${esc(e.message || e)}</div>`); }
+  finally { btn.disabled = false; btn.textContent = "Daftar Akun Baru"; }
+}
+async function masuk(){
+  const username = ($("inUser").value || "").trim().toLowerCase();
+  const pass = $("inPass").value || "";
+  if (!username || !pass) { infoAuth(`<div class="pesan-info merah">Isi username dan password.</div>`); return; }
+  const btn = $("btnMasuk"); btn.disabled = true; btn.textContent = "Memeriksa…";
+  try {
+    if (mode === "local") {
+      const d = dbLokal();
+      const u = d.users.find((x) => x.username === username);
+      if (!u || u.pass !== pass) { infoAuth(`<div class="pesan-info merah">Gagal masuk: username atau password salah. Daftar dulu kalau belum punya akun.</div>`); return; }
+      sesiLokal = u.id; me = profilLokal(u); masukAplikasi();
+      return;
+    }
+    const email = username + "@humba.local";
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+    if (error) { infoAuth(`<div class="pesan-info merah">Gagal masuk: ${esc(error.message)}</div>`); return; }
+    const ok = await muatProfilCloud(data.user.id);
+    if (!ok) { infoAuth(`<div class="pesan-info merah">Gagal masuk: Profil tidak ditemukan. Daftar dulu.</div>`); return; }
+    masukAplikasi();
+  } catch(e){ infoAuth(`<div class="pesan-info merah">Gagal masuk: ${esc(e.message || e)}</div>`); }
+  finally { btn.disabled = false; btn.textContent = "Masuk"; }
+}
+function profilLokal(u){ return { id: u.id, username: u.username, display_name: u.display_name, bio: u.bio || "", birthdate: u.birthdate || null, avatar_color: u.avatar_color || warnaAvatar(u.display_name), last_seen: u.last_seen || null, created_at: u.created_at || null }; }
+async function muatProfilCloud(uid){
+  const { data, error } = await sb.from("humba_profiles").select("*").eq("id", uid).single();
+  if (error || !data) return false;
+  me = data;
+  await sb.from("humba_profiles").update({ last_seen: sekarang() }).eq("id", uid);
+  return true;
+}
+async function keluar(e){
+  if (e) e.preventDefault();
+  try { if (mode === "cloud" && sb) await sb.auth.signOut(); } catch(e){}
+  me = null; sesiLokal = null;
+  try { localStorage.removeItem("ch.sesi"); } catch(e){}
+  if (chRealtime) { try { sb.removeChannel(chRealtime); } catch(e){} chRealtime = null; }
+  tampilAuth();
+}
+
+/* ---------- Lapisan data (cloud / lokal) ---------- */
+async function semuaProfil(){
+  if (mode === "local") return dbLokal().users.map(profilLokal);
+  const { data, error } = await sb.from("humba_profiles").select("*").order("display_name");
+  if (error) throw error;
+  return data || [];
+}
+async function profilDariId(id){
+  if (mode === "local") { const u = dbLokal().users.find((x) => x.id === id); return u ? profilLokal(u) : null; }
+  const { data } = await sb.from("humba_profiles").select("*").eq("id", id).single();
+  return data || null;
+}
+async function cariProfil(username){
+  if (mode === "local") { const u = dbLokal().users.find((x) => x.username === username); return u ? profilLokal(u) : null; }
+  const { data } = await sb.from("humba_profiles").select("*").eq("username", username).single();
+  return data || null;
+}
+async function daftarTeman(){
+  if (mode === "local") return dbLokal().friends.filter((f) => (f.requester_id === me.id || f.addressee_id === me.id));
+  const { data, error } = await sb.from("humba_friends").select("*").or(`requester_id.eq.${me.id},addressee_id.eq.${me.id}`);
+  if (error) throw error;
+  return data || [];
+}
+function idTemanLain(f){ return f.requester_id === me.id ? f.addressee_id : f.requester_id; }
+async function temanDiterima(){
+  const semua = await daftarTeman();
+  return semua.filter((f) => f.status === "accepted").map(idTemanLain);
+}
+async function kirimPermintaanTeman(targetId){
+  if (targetId === me.id) return "Itu akunmu sendiri.";
+  if (mode === "local") {
+    const d = dbLokal();
+    if (d.friends.some((f) => (f.requester_id === me.id && f.addressee_id === targetId) || (f.requester_id === targetId && f.addressee_id === me.id))) return "Permintaan sudah ada.";
+    d.friends.push({ id: uidBaru(), requester_id: me.id, addressee_id: targetId, status: "pending", created_at: sekarang() }); simpanLokal(d); return null;
+  }
+  const { error } = await sb.from("humba_friends").insert({ requester_id: me.id, addressee_id: targetId, status: "pending" });
+  return error ? error.message : null;
+}
+async function jawabTeman(id, terima){
+  if (mode === "local") {
+    const d = dbLokal(); const f = d.friends.find((x) => x.id === id); if (!f) return;
+    if (terima) f.status = "accepted"; else d.friends = d.friends.filter((x) => x.id !== id);
+    simpanLokal(d); return;
+  }
+  if (terima) await sb.from("humba_friends").update({ status: "accepted" }).eq("id", id);
+  else await sb.from("humba_friends").delete().eq("id", id);
+}
+async function ambilPostingan(wallId){
+  if (mode === "local") {
+    const d = dbLokal();
+    let list = d.posts.slice().sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    if (wallId) list = list.filter((p) => p.wall_user_id === wallId || (p.user_id === wallId && !p.wall_user_id));
+    else list = list.filter((p) => !p.wall_user_id);
+    return list.slice(0, 50);
+  }
+  let q = sb.from("humba_posts").select("*").order("created_at", { ascending: false }).limit(50);
+  if (wallId) q = q.or(`wall_user_id.eq.${wallId},and(user_id.eq.${wallId},wall_user_id.is.null)`);
+  else q = q.is("wall_user_id", null);
+  const { data, error } = await q;
+  if (error) throw error;
+  return data || [];
+}
+async function kirimStatus(teks, wallId){
+  const body = (teks || "").trim();
+  if (!body) return "Tulis dulu statusnya.";
+  if (body.length > 2000) return "Status maksimal 2000 karakter.";
+  if (mode === "local") {
+    const d = dbLokal();
+    d.posts.push({ id: uidBaru(), user_id: me.id, wall_user_id: wallId || null, body, created_at: sekarang() }); simpanLokal(d); return null;
+  }
+  const { error } = await sb.from("humba_posts").insert({ user_id: me.id, wall_user_id: wallId || null, body });
+  return error ? error.message : null;
+}
+async function hapusStatus(id){
+  if (mode === "local") { const d = dbLokal(); d.posts = d.posts.filter((p) => p.id !== id); d.comments = d.comments.filter((c) => c.post_id !== id); d.likes = d.likes.filter((l) => l.post_id !== id); simpanLokal(d); return; }
+  await sb.from("humba_posts").delete().eq("id", id);
+}
+async function ambilKomentar(postId){
+  if (mode === "local") return dbLokal().comments.filter((c) => c.post_id === postId).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  const { data } = await sb.from("humba_comments").select("*").eq("post_id", postId).order("created_at");
+  return data || [];
+}
+async function kirimKomentar(postId, teks){
+  const body = (teks || "").trim();
+  if (!body) return;
+  if (mode === "local") { const d = dbLokal(); d.comments.push({ id: uidBaru(), post_id: postId, user_id: me.id, body, created_at: sekarang() }); simpanLokal(d); return; }
+  await sb.from("humba_comments").insert({ post_id: postId, user_id: me.id, body });
+}
+async function toggleSuka(postId){
+  if (mode === "local") {
+    const d = dbLokal(); const i = d.likes.findIndex((l) => l.post_id === postId && l.user_id === me.id);
+    if (i >= 0) d.likes.splice(i, 1); else d.likes.push({ id: uidBaru(), post_id: postId, user_id: me.id, created_at: sekarang() });
+    simpanLokal(d); return;
+  }
+  const { data } = await sb.from("humba_likes").select("id").eq("post_id", postId).eq("user_id", me.id).maybeSingle();
+  if (data) await sb.from("humba_likes").delete().eq("id", data.id);
+  else await sb.from("humba_likes").insert({ post_id: postId, user_id: me.id });
+}
+async function hitungSuka(postId){
+  if (mode === "local") return dbLokal().likes.filter((l) => l.post_id === postId);
+  const { data } = await sb.from("humba_likes").select("user_id").eq("post_id", postId);
+  return data || [];
+}
+
+/* ---------- Tampilan utama ---------- */
+let view = "beranda", profilLihat = null, grupBuka = null, chatDengan = null, catatanBuka = null, hasilCari = [];
+let chRealtime = null;
+function masukAplikasi(){
+  $("layarAuth").style.display = "none"; $("layarApp").style.display = "block";
+  $("namaTop").textContent = me.display_name;
+  profilLihat = me.id; grupBuka = null; chatDengan = null; catatanBuka = null;
+  renderPanelProfil();
+  langgananRealtime();
+  tampil("beranda");
+}
+function renderPanelProfil(){
+  $("panelProfil").innerHTML = `<div class="baris-tengah">${avatarHtml(me, "besar")}<div><div class="nama">${esc(me.display_name)}</div><div class="muted">@${esc(me.username)}</div><div class="kecil" style="margin-top:4px">${me.bio ? esc(me.bio) : "Belum ada bio."}</div>${me.birthdate ? `<div class="kecil">🎂 ${tglIndo(me.birthdate)}</div>` : ""}</div></div><div style="margin-top:8px"><span class="chip">${mode === "cloud" ? "☁️ Tersambung (Supabase)" : "💾 Mode Lokal (demo)"}</span></div>`;
+}
+function setNavAktif(v){
+  document.querySelectorAll("#navKiri button").forEach((b) => b.classList.toggle("aktif", b.dataset.v === v));
+}
+async function tampil(v){
+  view = v; setNavAktif(v);
+  const t = $("tengah");
+  try {
+    if (v === "beranda") await renderBeranda(t);
+    else if (v === "teman") await renderTeman(t);
+    else if (v === "profil") await renderProfil(t, profilLihat || me.id);
+    else if (v === "grup") await renderGrup(t);
+    else if (v === "catatan") await renderCatatan(t);
+    else if (v === "pesan") await renderPesan(t);
+  } catch(e){ t.innerHTML = `<div class="kartu"><div class="pesan-info merah">Gagal memuat: ${esc(e.message || e)}</div></div>`; }
+  window.scrollTo({ top: 0 });
+}
+function langgananRealtime(){
+  if (mode !== "cloud" || !sb) return;
+  try {
+    chRealtime = sb.channel("ch-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "humba_posts" }, () => { if (view === "beranda") tampil("beranda"); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "humba_messages" }, () => { hitungBelumDibaca(); if (view === "pesan") tampil("pesan"); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "humba_pokes" }, () => { renderPanelKanan(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "humba_friends" }, () => { hitungBelumDibaca(); })
+      .subscribe();
+  } catch(e){}
+}
+async function hitungBelumDibaca(){
+  try {
+    let jmlPesan = 0, jmlTeman = 0;
+    if (mode === "local") {
+      const d = dbLokal();
+      jmlPesan = d.messages.filter((m) => m.recipient_id === me.id && !m.read_at).length;
+      jmlTeman = d.friends.filter((f) => f.addressee_id === me.id && f.status === "pending").length;
+    } else {
+      const r1 = await sb.from("humba_messages").select("id", { count: "exact", head: true }).eq("recipient_id", me.id).is("read_at", null);
+      jmlPesan = r1.count || 0;
+      const r2 = await sb.from("humba_friends").select("id", { count: "exact", head: true }).eq("addressee_id", me.id).eq("status", "pending");
+      jmlTeman = r2.count || 0;
+    }
+    $("jmlPesan").style.display = jmlPesan ? "" : "none"; $("jmlPesan").textContent = jmlPesan;
+    $("jmlTeman").style.display = jmlTeman ? "" : "none"; $("jmlTeman").textContent = jmlTeman;
+    $("pesanTop").innerHTML = jmlPesan ? `<span class="badge">${jmlPesan} pesan baru</span>` : "";
+    const pokes = await ambilPokeMasuk();
+    $("pokeTop").innerHTML = pokes.length ? `<span class="badge">👆 ${pokes.length} poke</span>` : "";
+  } catch(e){}
+}
+async function ambilPokeMasuk(){
+  if (mode === "local") return dbLokal().pokes.filter((p) => p.to_id === me.id).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5);
+  const { data } = await sb.from("humba_pokes").select("*").eq("to_id", me.id).order("created_at", { ascending: false }).limit(5);
+  return data || [];
+}
+async function kirimPoke(targetId, namaTarget){
+  if (targetId === me.id) return;
+  if (mode === "local") { const d = dbLokal(); d.pokes.push({ id: uidBaru(), from_id: me.id, to_id: targetId, created_at: sekarang() }); simpanLokal(d); }
+  else await sb.from("humba_pokes").insert({ from_id: me.id, to_id: targetId });
+  alert("Kamu me-poke " + namaTarget + " 👆");
+}
+async function renderPanelKanan(){
+  try {
+    const semua = await semuaProfil();
+    const online = semua.filter((p) => p.id !== me.id && p.last_seen && (Date.now() - new Date(p.last_seen).getTime() < 120000));
+    $("panelOnline").innerHTML = online.length
+      ? online.map((p) => `<div class="baris-tengah" style="margin-bottom:8px">${avatarHtml(p, "kecil")}<div style="flex:1;min-width:0"><a href="#" onclick="lihatProfil('${p.id}');return false">${esc(p.display_name)}</a><div class="muted"><span class="dot on"></span> Online</div></div><button class="tombol kecil" onclick="pokeDariPanel('${p.id}','${esc(p.display_name)}')">Poke</button></div>`).join("")
+      : `<span class="muted">Tidak ada teman yang online.</span>`;
+    const kini = new Date(); const ultah = semua.filter((p) => p.birthdate).map((p) => ({ p, jarak: jarakUltah(p.birthdate, kini) })).filter((x) => x.jarak >= 0 && x.jarak <= 30).sort((a, b) => a.jarak - b.jarak);
+    $("panelUltah").innerHTML = ultah.length
+      ? ultah.map((x) => `<div style="margin-bottom:6px">🎂 <b>${esc(x.p.display_name)}</b> — ${x.jarak === 0 ? "HARI INI!" : "dalam " + x.jarak + " hari"} (${tglIndo(x.p.birthdate)})</div>`).join("")
+      : `<span class="muted">Tidak ada ulang tahun dalam 30 hari ke depan.</span>`;
+    const pokes = await ambilPokeMasuk();
+    $("panelPoke").innerHTML = pokes.length
+      ? (await Promise.all(pokes.map(async (pk) => { const p = await profilDariId(pk.from_id); return p ? `<div style="margin-bottom:6px">👆 <b>${esc(p.display_name)}</b> me-poke kamu (${waktuRelatif(pk.created_at)}) <button class="tombol kecil" onclick="pokeDariPanel('${p.id}','${esc(p.display_name)}')">Poke balik</button></div>` : ""; }))).join("")
+      : `<span class="muted">Tidak ada poke.</span>`;
+  } catch(e){}
+}
+function jarakUltah(birthdate, kini){
+  const b = new Date(birthdate); const thn = kini.getFullYear();
+  let t = new Date(thn, b.getMonth(), b.getDate());
+  let jarak = Math.floor((t - kini) / 86400000);
+  if (jarak < 0) { t = new Date(thn + 1, b.getMonth(), b.getDate()); jarak = Math.floor((t - kini) / 86400000); }
+  return jarak;
+}
+async function pokeDariPanel(id, nama){ await kirimPoke(id, nama); renderPanelKanan(); }
+async function lihatProfil(id){ profilLihat = id; tampil("profil"); }
+
+/* ---------- Beranda (Kabar Beranda) ---------- */
+async function renderBeranda(t){
+  let postingan = await ambilPostingan(null);
+  let semua = {};
+  try { (await semuaProfil()).forEach((p) => semua[p.id] = p); } catch(e){}
+  const temanIds = await temanDiterima();
+  t.innerHTML = `
+  <div class="kartu">
+    <h2>Kabar Beranda</h2>
+    <div class="komposer">
+      <div class="baris" style="margin-bottom:8px">${avatarHtml(me)}<textarea id="inStatus" placeholder="Apa yang Anda pikirkan, ${esc(me.display_name)}?" maxlength="2000"></textarea></div>
+      <div style="text-align:right"><span class="muted" id="hitungStatus">0/2000</span> <button class="tombol" onclick="bagikanStatus()">Bagikan</button></div>
+    </div>
+  </div>
+  <div id="daftarStatus">${postingan.length ? "" : `<div class="kartu tengah"><b>Belum ada status sama sekali.</b><br><span class="muted">Jadilah yang pertama menulis status di HUMBA!</span></div>`}</div>`;
+  $("inStatus").addEventListener("input", (e) => { $("hitungStatus").textContent = e.target.value.length + "/2000"; });
+  for (const p of postingan) {
+    const pemilik = semua[p.user_id] || { display_name: "Pengguna", username: "?", avatar_color: "#888" };
+    const suka = await hitungSuka(p.id);
+    const sayaSuka = suka.some((s) => s.user_id === me.id);
+    const komen = await ambilKomentar(p.id);
+    const div = document.createElement("div");
+    div.className = "kartu";
+    div.innerHTML = `
+      <div class="baris">
+        ${avatarHtml(pemilik)}
+        <div style="flex:1;min-width:0">
+          <a href="#" class="nama" onclick="lihatProfil('${p.user_id}');return false">${esc(pemilik.display_name)}</a>
+          <div class="muted">${waktuRelatif(p.created_at)} · ${temanIds.includes(p.user_id) || p.user_id === me.id ? "Teman" : "Semua pengguna"}</div>
+        </div>
+        ${p.user_id === me.id ? `<button class="tombol kecil abu" onclick="hapusStatusUI('${p.id}')">Hapus</button>` : ""}
+      </div>
+      <div class="status"><div class="teks">${esc(p.body)}</div></div>
+      <div class="aksi">
+        <button class="${sayaSuka ? "suka-aktif" : ""}" onclick="sukaUI('${p.id}')">👍 Suka (${suka.length})</button>
+        <button onclick="fokusKomen('${p.id}')">💬 Komentar (${komen.length})</button>
+        <button onclick="pokeDariPanel('${p.user_id}','${esc(pemilik.display_name)}')">👆 Poke</button>
+      </div>
+      <div id="komen-${p.id}">
+        ${komen.map((k) => { const kp = semua[k.user_id] || { display_name: "?", avatar_color: "#888" }; return `<div class="komentar"><b>${esc(kp.display_name)}</b> <span class="muted">${waktuRelatif(k.created_at)}</span><div class="teks">${esc(k.body)}</div></div>`; }).join("")}
+      </div>
+      <div class="komen-form"><input id="inKomen-${p.id}" placeholder="Tulis komentar…" maxlength="500" onkeydown="if(event.key==='Enter')kirimKomenUI('${p.id}')"><button onclick="kirimKomenUI('${p.id}')">Kirim</button></div>`;
+    $("daftarStatus").appendChild(div);
+  }
+  renderPanelKanan(); hitungBelumDibaca();
+}
+async function bagikanStatus(){
+  const err = await kirimStatus($("inStatus").value, null);
+  if (err) { alert(err); return; }
+  tampil("beranda");
+}
+async function hapusStatusUI(id){ if (!confirm("Hapus status ini?")) return; await hapusStatus(id); tampil("beranda"); }
+async function sukaUI(id){ await toggleSuka(id); tampil("beranda"); }
+function fokusKomen(id){ const el = $("inKomen-" + id); if (el) el.focus(); }
+async function kirimKomenUI(id){ const el = $("inKomen-" + id); await kirimKomentar(id, el.value); tampil("beranda"); }
+
+/* ---------- Teman ---------- */
+async function cariTeman(){
+  const q = ($("inCari").value || "").trim().toLowerCase();
+  if (!q) { tampil("teman"); return; }
+  const semua = await semuaProfil();
+  hasilCari = semua.filter((p) => p.id !== me.id && (p.username.includes(q) || p.display_name.toLowerCase().includes(q)));
+  tampil("teman");
+}
+async function renderTeman(t){
+  const relasi = await daftarTeman();
+  const masuk = relasi.filter((f) => f.addressee_id === me.id && f.status === "pending");
+  const keluar = relasi.filter((f) => f.requester_id === me.id && f.status === "pending");
+  const diterima = relasi.filter((f) => f.status === "accepted");
+  const semua = {}; (await semuaProfil()).forEach((p) => semua[p.id] = p);
+  const kartuOrang = (p, tombol) => `<div class="item-pengguna">${avatarHtml(p)}<div class="info"><a href="#" class="nama" onclick="lihatProfil('${p.id}');return false">${esc(p.display_name)}</a><div class="sub">@${esc(p.username)}${p.bio ? " — " + esc(p.bio) : ""}</div></div>${tombol || ""}</div>`;
+  const tombolUntuk = (p) => {
+    const r = relasi.find((f) => idTemanLain(f) === p.id);
+    if (!r) return `<button class="tombol kecil" onclick="tambahTemanUI('${p.id}')">+ Tambah Teman</button>`;
+    if (r.status === "accepted") return `<button class="tombol kecil abu" onclick="bukaChat('${p.id}')">💬 Pesan</button> <button class="tombol kecil" onclick="pokeDariPanel('${p.id}','${esc(p.display_name)}')">👆 Poke</button>`;
+    if (r.requester_id === me.id) return `<span class="muted">Permintaan terkirim</span>`;
+    return `<button class="tombol kecil hijau" onclick="jawabTemanUI('${r.id}',true)">Terima</button> <button class="tombol kecil abu" onclick="jawabTemanUI('${r.id}',false)">Tolak</button>`;
+  };
+  t.innerHTML = `
+  <div class="kartu"><h2>Teman</h2>
+    <div class="komen-form" style="margin-top:0"><input id="inCariTeman" placeholder="Cari username atau nama…" value="${esc($("inCari").value || "")}" onkeydown="if(event.key==='Enter')cariTemanDariTab()"><button onclick="cariTemanDariTab()">Cari</button></div>
+    ${hasilCari.length || $("inCari").value ? `<h4>Hasil pencarian (${hasilCari.length})</h4>${hasilCari.length ? hasilCari.map((p) => kartuOrang(p, tombolUntuk(p))).join("") : `<p class="muted">Tidak ditemukan.</p>`}` : ""}
+  </div>
+  ${masuk.length ? `<div class="kartu"><h2>Permintaan Pertemanan (${masuk.length})</h2>${masuk.map((f) => { const p = semua[f.requester_id]; return p ? kartuOrang(p, `<button class="tombol kecil hijau" onclick="jawabTemanUI('${f.id}',true)">Terima</button> <button class="tombol kecil abu" onclick="jawabTemanUI('${f.id}',false)">Tolak</button>`) : ""; }).join("")}</div>` : ""}
+  ${keluar.length ? `<div class="kartu"><h2>Permintaan Terkirim (${keluar.length})</h2>${keluar.map((f) => { const p = semua[f.addressee_id]; return p ? kartuOrang(p, `<span class="muted">Menunggu jawaban</span>`) : ""; }).join("")}</div>` : ""}
+  <div class="kartu"><h2>Teman Saya (${diterima.length})</h2>
+    ${diterima.length ? diterima.map((f) => { const p = semua[idTemanLain(f)]; return p ? kartuOrang(p, `<button class="tombol kecil abu" onclick="bukaChat('${p.id}')">💬 Pesan</button> <button class="tombol kecil" onclick="pokeDariPanel('${p.id}','${esc(p.display_name)}')">👆 Poke</button>`) : ""; }).join("") : `<p class="muted">Belum ada teman. Cari username temanmu di atas lalu tambah.</p>`}
+  </div>
+  <div class="kartu"><h2>Semua Pengguna</h2>
+    ${(await semuaProfil()).filter((p) => p.id !== me.id).slice(0, 30).map((p) => kartuOrang(p, tombolUntuk(p))).join("") || `<p class="muted">Belum ada pengguna lain.</p>`}
+  </div>`;
+  renderPanelKanan();
+}
+async function cariTemanDariTab(){ $("inCari").value = $("inCariTeman").value; await cariTeman(); }
+async function tambahTemanUI(id){ const err = await kirimPermintaanTeman(id); if (err) alert(err); else alert("Permintaan pertemanan terkirim."); tampil("teman"); }
+async function jawabTemanUI(id, terima){ await jawabTeman(id, terima); tampil("teman"); }
+
+/* ---------- Profil & Dinding ---------- */
+async function renderProfil(t, userId){
+  const p = await profilDariId(userId);
+  if (!p) { t.innerHTML = `<div class="kartu"><div class="pesan-info merah">Profil tidak ditemukan.</div></div>`; return; }
+  const saya = p.id === me.id;
+  const temanIds = await temanDiterima();
+  const adalahTeman = saya || temanIds.includes(p.id);
+  const wall = await ambilPostingan(p.id);
+  const semua = {}; (await semuaProfil()).forEach((x) => semua[x.id] = x);
+  t.innerHTML = `
+  <div class="kartu">
+    <div class="baris">${avatarHtml(p, "besar")}
+      <div style="flex:1;min-width:0">
+        <h2 style="margin-bottom:2px">${esc(p.display_name)}</h2>
+        <div class="muted">@${esc(p.username)} · Bergabung ${p.created_at ? tglIndo(p.created_at) : "-"}</div>
+        <div style="margin-top:6px">${p.bio ? esc(p.bio) : "<span class='muted'>Belum ada bio.</span>"}</div>
+        ${p.birthdate ? `<div class="kecil" style="margin-top:4px">🎂 Lahir ${tglIndo(p.birthdate)}</div>` : ""}
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+          ${saya ? `<button class="tombol kecil" onclick="editProfilUI()">✏️ Ubah Profil</button>` : ""}
+          ${!saya ? `<button class="tombol kecil" onclick="tambahTemanUI('${p.id}')">+ Tambah Teman</button> <button class="tombol kecil abu" onclick="bukaChat('${p.id}')">💬 Pesan</button> <button class="tombol kecil" onclick="pokeDariPanel('${p.id}','${esc(p.display_name)}')">👆 Poke</button>` : ""}
+        </div>
+      </div>
+    </div>
+    <div id="formProfil" style="display:none;margin-top:12px">
+      <div class="field"><label>Nama tampilan</label><input id="editNama" value="${esc(p.display_name)}"></div>
+      <div class="field"><label>Bio</label><textarea id="editBio">${esc(p.bio || "")}</textarea></div>
+      <div class="field"><label>Tanggal lahir</label><input id="editTgl" type="date" value="${p.birthdate || ""}"></div>
+      <button class="tombol kecil" onclick="simpanProfilUI()">Simpan</button>
+    </div>
+  </div>
+  <div class="kartu">
+    <h2>Dinding ${esc(p.display_name)}</h2>
+    <div class="komposer">
+      <textarea id="inWall" placeholder="Tulis sesuatu di dinding ${esc(p.display_name)}…" maxlength="2000"></textarea>
+      <div style="text-align:right;margin-top:6px"><button class="tombol" onclick="bagikanWall('${p.id}')">Tulis di Dinding</button></div>
+    </div>
+    <div id="daftarWall">${wall.length ? "" : `<p class="muted" style="margin-top:10px">Belum ada tulisan di dinding ini.</p>`}</div>
+  </div>`;
+  for (const w of wall) {
+    const pemilik = semua[w.user_id] || { display_name: "?", avatar_color: "#888" };
+    const suka = await hitungSuka(w.id);
+    const komen = await ambilKomentar(w.id);
+    const div = document.createElement("div");
+    div.className = "status";
+    div.innerHTML = `
+      <div class="baris">${avatarHtml(pemilik, "kecil")}<div style="flex:1;min-width:0"><a href="#" class="nama" onclick="lihatProfil('${w.user_id}');return false">${esc(pemilik.display_name)}</a> <span class="muted">${waktuRelatif(w.created_at)}</span>${w.user_id === me.id || w.wall_user_id === me.id ? ` <button class="tombol kecil abu" onclick="hapusStatusUI('${w.id}')">Hapus</button>` : ""}<div class="teks">${esc(w.body)}</div>
+      <div class="aksi"><button class="${suka.some((s) => s.user_id === me.id) ? "suka-aktif" : ""}" onclick="sukaUI('${w.id}')">👍 Suka (${suka.length})</button><button onclick="fokusKomen('${w.id}')">💬 Komentar (${komen.length})</button></div>
+      <div id="komen-${w.id}">${komen.map((k) => { const kp = semua[k.user_id] || { display_name: "?", avatar_color: "#888" }; return `<div class="komentar"><b>${esc(kp.display_name)}</b> <span class="muted">${waktuRelatif(k.created_at)}</span><div class="teks">${esc(k.body)}</div></div>`; }).join("")}</div>
+      <div class="komen-form"><input id="inKomen-${w.id}" placeholder="Tulis komentar…" maxlength="500" onkeydown="if(event.key==='Enter')kirimKomenUI('${w.id}')"><button onclick="kirimKomenUI('${w.id}')">Kirim</button></div>
+      </div></div>`;
+    $("daftarWall").appendChild(div);
+  }
+  renderPanelKanan();
+}
+function editProfilUI(){ $("formProfil").style.display = $("formProfil").style.display === "none" ? "block" : "none"; }
+async function simpanProfilUI(){
+  const nama = ($("editNama").value || "").trim();
+  const bio = ($("editBio").value || "").trim();
+  const tgl = $("editTgl").value || null;
+  if (nama.length < 2 || nama.length > 32) { alert("Nama tampilan 2–32 karakter."); return; }
+  if (mode === "local") {
+    const d = dbLokal(); const u = d.users.find((x) => x.id === me.id);
+    if (u) { u.display_name = nama; u.bio = bio; u.birthdate = tgl; simpanLokal(d); me = profilLokal(u); }
+  } else {
+    const { error } = await sb.from("humba_profiles").update({ display_name: nama, bio, birthdate: tgl }).eq("id", me.id);
+    if (error) { alert("Gagal menyimpan: " + error.message); return; }
+    me.display_name = nama; me.bio = bio; me.birthdate = tgl;
+  }
+  $("namaTop").textContent = me.display_name; renderPanelProfil(); tampil("profil");
+}
+async function bagikanWall(wallId){
+  const err = await kirimStatus($("inWall").value, wallId);
+  if (err) { alert(err); return; }
+  tampil("profil");
+}
+
+/* ---------- Grup ---------- */
+async function ambilGrup(){
+  if (mode === "local") return dbLokal().groups.slice().sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  const { data } = await sb.from("humba_groups").select("*").order("created_at", { ascending: false });
+  return data || [];
+}
+async function anggotaGrupSaya(){
+  if (mode === "local") return dbLokal().members.filter((m) => m.user_id === me.id).map((m) => m.group_id);
+  const { data } = await sb.from("humba_group_members").select("group_id").eq("user_id", me.id);
+  return (data || []).map((m) => m.group_id);
+}
+async function buatGrupUI(){
+  const nama = ($("inNamaGrup").value || "").trim();
+  const desk = ($("inDeskGrup").value || "").trim();
+  if (nama.length < 2) { alert("Nama grup minimal 2 karakter."); return; }
+  if (mode === "local") {
+    const d = dbLokal(); const g = { id: uidBaru(), name: nama, description: desk, created_by: me.id, created_at: sekarang() };
+    d.groups.push(g); d.members.push({ group_id: g.id, user_id: me.id, joined_at: sekarang() }); simpanLokal(d);
+  } else {
+    const { data, error } = await sb.from("humba_groups").insert({ name: nama, description: desk, created_by: me.id }).select("id").single();
+    if (error) { alert("Gagal membuat grup: " + error.message); return; }
+    await sb.from("humba_group_members").insert({ group_id: data.id, user_id: me.id });
+  }
+  tampil("grup");
+}
+async function gabungGrupUI(gid){
+  if (mode === "local") { const d = dbLokal(); if (!d.members.some((m) => m.group_id === gid && m.user_id === me.id)) { d.members.push({ group_id: gid, user_id: me.id, joined_at: sekarang() }); simpanLokal(d); } }
+  else await sb.from("humba_group_members").insert({ group_id: gid, user_id: me.id });
+  grupBuka = gid; tampil("grup");
+}
+async function renderGrup(t){
+  const semuaGrup = await ambilGrup();
+  const saya = await anggotaGrupSaya();
+  if (grupBuka) {
+    const g = semuaGrup.find((x) => x.id === grupBuka);
+    if (!g) { grupBuka = null; return renderGrup(t); }
+    let kiriman = [];
+    if (mode === "local") kiriman = dbLokal().gposts.filter((x) => x.group_id === g.id).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    else { const r = await sb.from("humba_group_posts").select("*").eq("group_id", g.id).order("created_at", { ascending: false }); kiriman = r.data || []; }
+    const semua = {}; (await semuaProfil()).forEach((p) => semua[p.id] = p);
+    t.innerHTML = `
+    <div class="kartu"><button class="tombol kecil abu" onclick="grupBuka=null;tampil('grup')">← Semua Grup</button>
+      <h2 style="margin-top:8px">${esc(g.name)}</h2>
+      <p class="muted">${esc(g.description || "")}</p>
+      <div class="komposer" style="margin-top:10px"><textarea id="inGPost" placeholder="Tulis sesuatu di grup ini…" maxlength="2000"></textarea>
+      <div style="text-align:right;margin-top:6px"><button class="tombol" onclick="kirimGPost('${g.id}')">Kirim ke Grup</button></div></div>
+    </div>
+    <div class="kartu"><h2>Kiriman Grup</h2><div id="daftarGPost">${kiriman.length ? "" : `<p class="muted">Belum ada kiriman di grup ini.</p>`}</div></div>`;
+    for (const k of kiriman) {
+      const pemilik = semua[k.user_id] || { display_name: "?", avatar_color: "#888" };
+      const div = document.createElement("div");
+      div.className = "status";
+      div.innerHTML = `<div class="baris">${avatarHtml(pemilik, "kecil")}<div style="flex:1;min-width:0"><a href="#" class="nama" onclick="lihatProfil('${k.user_id}');return false">${esc(pemilik.display_name)}</a> <span class="muted">${waktuRelatif(k.created_at)}</span><div class="teks">${esc(k.body)}</div></div></div>`;
+      $("daftarGPost").appendChild(div);
+    }
+    renderPanelKanan(); return;
+  }
+  t.innerHTML = `
+  <div class="kartu"><h2>Buat Grup Baru</h2>
+    <div class="field"><label>Nama grup</label><input id="inNamaGrup" placeholder="contoh: Mio Sporty Mks"></div>
+    <div class="field"><label>Deskripsi</label><input id="inDeskGrup" placeholder="Tentang grup ini…"></div>
+    <button class="tombol" onclick="buatGrupUI()">Buat Grup</button>
+  </div>
+  <div class="kartu"><h2>Grup Saya (${semuaGrup.filter((g) => saya.includes(g.id)).length})</h2>
+    ${semuaGrup.filter((g) => saya.includes(g.id)).map((g) => `<div class="item-pengguna daftar-grup" onclick="grupBuka='${g.id}';tampil('grup')"><span class="avatar" style="background:#e67e22">👥</span><div class="info"><div class="nama">${esc(g.name)}</div><div class="sub">${esc(g.description || "")}</div></div><span class="muted">Buka →</span></div>`).join("") || `<p class="muted">Kamu belum bergabung ke grup mana pun.</p>`}
+  </div>
+  <div class="kartu"><h2>Semua Grup (${semuaGrup.length})</h2>
+    ${semuaGrup.map((g) => `<div class="item-pengguna"><span class="avatar" style="background:#e67e22">👥</span><div class="info"><div class="nama">${esc(g.name)}</div><div class="sub">${esc(g.description || "")}</div></div>${saya.includes(g.id) ? `<button class="tombol kecil abu" onclick="grupBuka='${g.id}';tampil('grup')">Buka</button>` : `<button class="tombol kecil" onclick="gabungGrupUI('${g.id}')">Gabung</button>`}</div>`).join("") || `<p class="muted">Belum ada grup. Buat grup pertama di atas!</p>`}
+  </div>`;
+  renderPanelKanan();
+}
+async function kirimGPost(gid){
+  const body = ($("inGPost").value || "").trim();
+  if (!body) return;
+  if (mode === "local") { const d = dbLokal(); d.gposts.push({ id: uidBaru(), group_id: gid, user_id: me.id, body, created_at: sekarang() }); simpanLokal(d); }
+  else await sb.from("humba_group_posts").insert({ group_id: gid, user_id: me.id, body });
+  tampil("grup");
+}
+
+/* ---------- Catatan (Notes) ---------- */
+async function ambilCatatan(){
+  if (mode === "local") return dbLokal().notes.filter((n) => n.user_id === me.id).sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+  const { data } = await sb.from("humba_notes").select("*").eq("user_id", me.id).order("updated_at", { ascending: false });
+  return data || [];
+}
+async function simpanCatatanUI(){
+  const judul = ($("inJudulCatatan").value || "").trim();
+  const isi = ($("inIsiCatatan").value || "").trim();
+  const publik = $("inPublikCatatan").checked;
+  if (!judul && !isi) { alert("Isi dulu judul atau isi catatannya."); return; }
+  if (mode === "local") {
+    const d = dbLokal();
+    if (catatanBuka) { const n = d.notes.find((x) => x.id === catatanBuka); if (n) { n.title = judul; n.body = isi; n.is_public = publik; n.updated_at = sekarang(); } }
+    else d.notes.push({ id: uidBaru(), user_id: me.id, title: judul, body: isi, is_public: publik, created_at: sekarang(), updated_at: sekarang() });
+    simpanLokal(d);
+  } else {
+    if (catatanBuka) await sb.from("humba_notes").update({ title: judul, body: isi, is_public: publik, updated_at: sekarang() }).eq("id", catatanBuka);
+    else await sb.from("humba_notes").insert({ user_id: me.id, title: judul, body: isi, is_public: publik });
+  }
+  catatanBuka = null; tampil("catatan");
+}
+async function hapusCatatanUI(id){
+  if (!confirm("Hapus catatan ini?")) return;
+  if (mode === "local") { const d = dbLokal(); d.notes = d.notes.filter((n) => n.id !== id); simpanLokal(d); }
+  else await sb.from("humba_notes").delete().eq("id", id);
+  tampil("catatan");
+}
+async function renderCatatan(t){
+  const daftar = await ambilCatatan();
+  const buka = catatanBuka ? daftar.find((n) => n.id === catatanBuka) : null;
+  t.innerHTML = `
+  <div class="kartu"><h2>${buka ? "Ubah Catatan" : "Catatan Baru"}</h2>
+    <div class="field"><label>Judul</label><input id="inJudulCatatan" value="${buka ? esc(buka.title) : ""}" placeholder="Judul catatan…"></div>
+    <div class="field"><label>Isi</label><textarea class="editor-catatan" id="inIsiCatatan" placeholder="Tulis catatanmu di sini…">${buka ? esc(buka.body) : ""}</textarea></div>
+    <label class="kecil"><input type="checkbox" id="inPublikCatatan" ${buka && buka.is_public ? "checked" : ""}> Publikasikan (bisa dibaca semua pengguna)</label>
+    <div style="margin-top:10px;display:flex;gap:8px"><button class="tombol" onclick="simpanCatatanUI()">💾 Simpan Catatan</button>${buka ? `<button class="tombol abu" onclick="catatanBuka=null;tampil('catatan')">Batal</button>` : ""}</div>
+  </div>
+  <div class="kartu"><h2>Catatan Saya (${daftar.length})</h2>
+    ${daftar.map((n) => `<div class="item-pengguna"><span class="avatar" style="background:#e67e22">📒</span><div class="info"><div class="judul-catatan">${esc(n.title || "(tanpa judul)")} ${n.is_public ? `<span class="chip">Publik</span>` : `<span class="chip">Pribadi</span>`}</div><div class="sub">${esc((n.body || "").slice(0, 120))}${(n.body || "").length > 120 ? "…" : ""}</div><div class="muted">${waktuRelatif(n.updated_at)}</div></div><button class="tombol kecil" onclick="catatanBuka='${n.id}';tampil('catatan')">Buka</button> <button class="tombol kecil abu" onclick="hapusCatatanUI('${n.id}')">Hapus</button></div>`).join("") || `<p class="muted">Belum ada catatan. Tulis catatan pertamamu di atas!</p>`}
+  </div>`;
+  renderPanelKanan();
+}
+
+/* ---------- Pesan pribadi ---------- */
+async function daftarPercakapan(){
+  let semuaPesan = [];
+  if (mode === "local") semuaPesan = dbLokal().messages.filter((m) => m.sender_id === me.id || m.recipient_id === me.id);
+  else { const { data } = await sb.from("humba_messages").select("*").or(`sender_id.eq.${me.id},recipient_id.eq.${me.id}`).order("created_at", { ascending: false }).limit(200); semuaPesan = data || []; }
+  const peta = new Map();
+  for (const m of semuaPesan) {
+    const lain = m.sender_id === me.id ? m.recipient_id : m.sender_id;
+    if (!peta.has(lain) || new Date(m.created_at) > new Date(peta.get(lain).created_at)) peta.set(lain, m);
+  }
+  return [...peta.entries()].sort((a, b) => new Date(b[1].created_at) - new Date(a[1].created_at));
+}
+async function ambilRiwayat(lainId){
+  if (mode === "local") return dbLokal().messages.filter((m) => (m.sender_id === me.id && m.recipient_id === lainId) || (m.sender_id === lainId && m.recipient_id === me.id)).sort((a, b) => new Date(a.created_at) - new Date(b.created_at)).slice(-100);
+  const { data } = await sb.from("humba_messages").select("*").or(`and(sender_id.eq.${me.id},recipient_id.eq.${lainId}),and(sender_id.eq.${lainId},recipient_id.eq.${me.id})`).order("created_at").limit(100);
+  return data || [];
+}
+async function tandaiDibaca(lainId){
+  if (mode === "local") { const d = dbLokal(); d.messages.forEach((m) => { if (m.sender_id === lainId && m.recipient_id === me.id && !m.read_at) m.read_at = sekarang(); }); simpanLokal(d); }
+  else await sb.from("humba_messages").update({ read_at: sekarang() }).eq("sender_id", lainId).eq("recipient_id", me.id).is("read_at", null);
+}
+async function kirimPesanUI(){
+  const teks = ($("inPesan").value || "").trim();
+  if (!teks || !chatDengan) return;
+  if (mode === "local") { const d = dbLokal(); d.messages.push({ id: uidBaru(), sender_id: me.id, recipient_id: chatDengan, body: teks, created_at: sekarang(), read_at: null }); simpanLokal(d); }
+  else await sb.from("humba_messages").insert({ sender_id: me.id, recipient_id: chatDengan, body: teks });
+  $("inPesan").value = ""; tampil("pesan");
+}
+async function bukaChat(id){ chatDengan = id; tampil("pesan"); }
+async function renderPesan(t){
+  const temanIds = await temanDiterima();
+  const semua = {}; (await semuaProfil()).forEach((p) => semua[p.id] = p);
+  const percakapan = await daftarPercakapan();
+  if (chatDengan) {
+    const lawan = semua[chatDengan] || { display_name: "?", username: "?", avatar_color: "#888" };
+    const riwayat = await ambilRiwayat(chatDengan);
+    await tandaiDibaca(chatDengan); hitungBelumDibaca();
+    t.innerHTML = `
+    <div class="kartu"><button class="tombol kecil abu" onclick="chatDengan=null;tampil('pesan')">← Semua Pesan</button>
+      <div class="baris-tengah" style="margin-top:10px">${avatarHtml(lawan)}<div><div class="nama">${esc(lawan.display_name)}</div><div class="muted">@${esc(lawan.username)}</div></div>
+      <span style="margin-left:auto"><button class="tombol kecil" onclick="pokeDariPanel('${lawan.id}','${esc(lawan.display_name)}')">👆 Poke</button></span></div>
+    </div>
+    <div class="kartu"><div class="chat-wrap"><div class="chat-area" id="areaChat">
+      ${riwayat.length ? riwayat.map((m) => `<div class="gelembung ${m.sender_id === me.id ? "kirim" : "terima"}">${esc(m.body)}<div class="waktu">${jamSingkat(m.created_at)}</div></div>`).join("") : `<p class="muted tengah">Belum ada pesan. Sapa ${esc(lawan.display_name)}!</p>`}
+    </div>
+    <div class="chat-input"><input id="inPesan" placeholder="Tulis pesan…" maxlength="2000" onkeydown="if(event.key==='Enter')kirimPesanUI()"><button class="tombol" onclick="kirimPesanUI()">Kirim</button></div></div></div>`;
+    const area = $("areaChat"); if (area) area.scrollTop = area.scrollHeight;
+    const inp = $("inPesan"); if (inp) inp.focus();
+    renderPanelKanan(); return;
+  }
+  t.innerHTML = `
+  <div class="kartu"><h2>Pesan Masuk</h2>
+    ${percakapan.length ? percakapan.map(([lainId, m]) => { const p = semua[lainId]; if (!p) return ""; const belum = mode === "local" ? 0 : 0; return `<div class="item-pengguna daftar-grup" onclick="bukaChat('${lainId}')">${avatarHtml(p)}<div class="info"><div class="nama">${esc(p.display_name)}</div><div class="sub">${m.sender_id === me.id ? "Kamu: " : ""}${esc((m.body || "").slice(0, 80))}</div></div><span class="muted">${waktuRelatif(m.created_at)}</span></div>`; }).join("") : `<p class="muted">Belum ada percakapan.</p>`}
+  </div>
+  <div class="kartu"><h2>Mulai Chat dengan Teman</h2>
+    ${temanIds.length ? temanIds.map((id) => { const p = semua[id]; return p ? `<div class="item-pengguna">${avatarHtml(p)}<div class="info"><div class="nama">${esc(p.display_name)}</div><div class="sub">@${esc(p.username)}</div></div><button class="tombol kecil" onclick="bukaChat('${p.id}')">💬 Chat</button></div>` : ""; }).join("") : `<p class="muted">Belum ada teman. Tambah teman dulu di menu Teman.</p>`}
+  </div>`;
+  renderPanelKanan();
+}
+
+/* ---------- Mulai ---------- */
+window.addEventListener("DOMContentLoaded", async () => {
+  tampilAuth();
+  const ok = await initSupabase();
+  if (ok) { mode = "cloud"; infoAuth(`<div class="pesan-info hijau">☁️ Tersambung ke Supabase. Silakan daftar atau masuk.</div>`); }
+  else {
+    mode = "local";
+    infoAuth(`<div class="pesan-info kuning">⚠️ Belum tersambung ke Supabase (tabel belum dibuat atau kunci belum aktif). Aplikasi jalan dalam <b>Mode Lokal (demo)</b> — akun hanya tersimpan di HP ini. Jalankan <b>supabase/schema.sql</b> di SQL Editor lalu muat ulang halaman ini untuk mengaktifkan sinkron antar HP.</div>`);
+  }
+});
+</script>
+</body>
+</html>
