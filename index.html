@@ -354,6 +354,7 @@ let modeDaftar = false;
 function toggleModeDaftar(e){ if (e) e.preventDefault(); modeDaftar = !modeDaftar; tampilAuth(); }
 function tampilAuth(){
   $("layarAuth").style.display = "block"; $("layarApp").style.display = "none";
+  document.querySelectorAll("#layarAuth .field, #layarAuth .tombol, #layarAuth details").forEach((el) => { el.style.display = ""; });
   $("fieldNama").style.display = modeDaftar ? "block" : "none";
   $("fieldTgl").style.display = modeDaftar ? "block" : "none";
   $("btnMasuk").style.display = modeDaftar ? "none" : "block";
@@ -1001,7 +1002,9 @@ async function renderPesan(t){
 
 /* ---------- Mulai ---------- */
 window.addEventListener("DOMContentLoaded", async () => {
-  tampilAuth();
+  $("layarAuth").style.display = "block";
+  document.querySelectorAll("#layarAuth .field, #layarAuth .tombol, #layarAuth details").forEach((el) => { el.style.display = "none"; });
+  infoAuth(`<div class="pesan-info">Memuat HUMBA…</div>`);
   const ok = await initSupabase();
   if (pilihanLokal) return;
   if (ok) {
@@ -1013,6 +1016,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         if (okProfil) { masukAplikasi(); return; }
       }
     } catch(e){}
+    tampilAuth();
     infoAuth(`<div class="pesan-info hijau">☁️ Tersambung ke Supabase. Silakan daftar atau masuk.</div>`);
   }
   else {
@@ -1025,6 +1029,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         if (u) { sesiLokal = u.id; me = profilLokal(u); masukAplikasi(); return; }
       }
     } catch(e){}
+    tampilAuth();
     infoAuth(`<div class="pesan-info kuning">⚠️ Belum tersambung ke Supabase (tabel belum dibuat atau kunci belum aktif). Aplikasi jalan dalam <b>Mode Lokal (demo)</b> — akun hanya tersimpan di HP ini. Jalankan <b>supabase/schema.sql</b> di SQL Editor lalu muat ulang halaman ini untuk mengaktifkan sinkron antar HP.</div>`);
   }
 });
