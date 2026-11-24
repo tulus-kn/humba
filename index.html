@@ -290,7 +290,7 @@ details.supabase input{background:#26262b;color:var(--teks);border-color:#3a3a40
       <div id="authInfo"></div>
       <div class="field"><label>Username (3–20 karakter, huruf kecil, angka, titik, _)</label><input id="inUser" placeholder="contoh: andi09" autocomplete="username"></div>
       <div class="field" id="fieldNama" style="display:none"><label>Nama tampilan</label><input id="inNama" placeholder="contoh: Andi"></div>
-      <div class="field"><label>Password (min. 4 karakter)</label><input id="inPass" type="password" placeholder="••••" autocomplete="current-password"></div>
+      <div class="field"><label>Password (min. 6 karakter)</label><input id="inPass" type="password" placeholder="••••" autocomplete="current-password"></div>
       <div class="field" id="fieldTgl" style="display:none"><label>Tanggal lahir (untuk pengingat ulang tahun)</label><input id="inTgl" type="date"></div>
       <button class="tombol tombol-penuh" id="btnMasuk" onclick="masuk()">Masuk</button>
       <button class="tombol tombol-penuh hijau" id="btnDaftar" style="display:none" onclick="daftar()">Daftar Akun Baru</button>
@@ -506,7 +506,7 @@ async function daftar(){
   const tgl = $("inTgl").value || null;
   if (!USERNAME_OK.test(username)) { infoAuth(`<div class="pesan-info merah">Username harus 3–20 karakter: huruf kecil, angka, titik, atau _.</div>`); return; }
   if (nama.length < 2 || nama.length > 32) { infoAuth(`<div class="pesan-info merah">Nama tampilan 2–32 karakter.</div>`); return; }
-  if (pass.length < 4) { infoAuth(`<div class="pesan-info merah">Password minimal 4 karakter.</div>`); return; }
+  if (pass.length < 6) { infoAuth(`<div class="pesan-info merah">Password minimal 6 karakter.</div>`); return; }
   const btn = $("btnDaftar"); btn.disabled = true; btn.textContent = "Mendaftar…";
   try {
     if (mode === "local") {
@@ -1728,7 +1728,7 @@ function ukuranCache(){
 function renderPengaturan(t){
   t.innerHTML = `<div class="kartu"><h2>Pengaturan</h2>
     <button class="menu-baris" onclick="tampil('pengaturan');setTimeout(()=>{const e=$('inPassBaru');if(e)e.focus();},50)">🔐 Keamanan Akun <span class="panah">›</span></button>
-    <div class="field" style="margin-top:10px"><label>Ganti Password</label><input id="inPassBaru" type="password" placeholder="Password baru (min. 4 karakter)"></div>
+    <div class="field" style="margin-top:10px"><label>Ganti Password</label><input id="inPassBaru" type="password" placeholder="Password baru (min. 6 karakter)"></div>
     <button class="tombol kecil" onclick="gantiPasswordUI()">Simpan Password Baru</button>
     <h4 style="margin-top:16px">Umum</h4>
     <div class="menu-baris">🌐 Bahasa <span class="panah">Bahasa Indonesia</span></div>
@@ -1754,7 +1754,7 @@ function toggleNotif(e){ if (e) e.preventDefault(); simpanJSON("ch.notif", !muat
 function simpanAlamatUI(){ simpanJSON("ch.alamat", ($("inAlamat").value || "").trim()); alert("Alamat tersimpan."); tampil("pengaturan"); }
 async function gantiPasswordUI(){
   const baru = ($("inPassBaru").value || "");
-  if (baru.length < 4) { alert("Password baru minimal 4 karakter."); return; }
+  if (baru.length < 6) { alert("Password baru minimal 6 karakter."); return; }
   if (mode === "local") {
     const d = dbLokal(); const u = d.users.find((x) => x.id === me.id);
     if (u) { u.pass = baru; simpanLokal(d); alert("Password berhasil diganti."); tampil("pengaturan"); return; }

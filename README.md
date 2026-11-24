@@ -46,7 +46,7 @@ Jejaring sosial nostalgia ala Facebook 2009, tersambung ke Supabase supaya akun 
 ## Cara pakai (pengguna)
 
 1. Buka `https://tulus-kn.github.io/humba/`.
-2. Tekan **Daftar Akun Baru**, isi username (huruf kecil, 3–20 karakter), nama tampilan, password (min. 4 karakter), dan tanggal lahir (opsional).
+2. Tekan **Daftar Akun Baru**, isi username (huruf kecil, 3–20 karakter), nama tampilan, password (min. 6 karakter), dan tanggal lahir (opsional).
 3. Tulis status di Kabar Beranda, cari teman lewat kolom pencarian, buat grup, tulis catatan, atau kirim pesan.
 
 ## Batasan yang jujur
