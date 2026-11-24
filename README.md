@@ -53,7 +53,9 @@ Jejaring sosial nostalgia ala Facebook 2009, tersambung ke Supabase supaya akun 
 
 10. **Mengaktifkan visibility per postingan (satu kali): SQL Editor → New query → tempel seluruh isi file `supabase/migrasi-visibility.sql` → Run.** Menambah kolom `visibility` (`public`/`friends`, default `public`) di `humba_posts` dan mengubah policy SELECT supaya status "Teman saja" hanya bisa dibaca penulisnya dan teman-temannya. Tanpa langkah ini, status baru gagal terkirim di cloud dengan pesan migrasi — aplikasi tidak crash.
 
-**Jalan pintas:** langkah 4–10 sudah digabung dalam **satu file `supabase/migrasi-semua.sql`** — tempel file itu saja, tidak perlu tempel satu-satu.
+11. **Perbaikan review kedua (satu kali): SQL Editor → New query → tempel seluruh isi file `supabase/migrasi-semua.sql` (sudah berisi bagian 8) → Run.** File aman di-run ulang, jadi menempel ulang seluruh file tidak masalah. Isinya: column grant produk (penjual tidak bisa lagi mengubah `created_at` barang sendiri), batas panjang teks produk, kolom `updated_at` + trigger di 5 tabel yang bisa diedit, dan column grant profil + catatan.
+
+**Jalan pintas:** langkah 4–11 sudah digabung dalam **satu file `supabase/migrasi-semua.sql`** — tempel file itu saja, tidak perlu tempel satu-satu.
 
 ## Cara pakai (pengguna)
 

@@ -21,4 +21,4 @@ create policy "humba_posts_select_all" on public.humba_posts
   );
 
 revoke update on public.humba_posts from authenticated;
-grant update (body, image_url, video_url, visibility) on public.humba_posts to authenticated;
+grant update (body, image_url, video_url, visibility, updated_at) on public.humba_posts to authenticated;

@@ -21,6 +21,31 @@ alter table public.humba_profiles drop constraint if exists humba_profiles_bio_c
 alter table public.humba_profiles add constraint humba_profiles_bio_chk
   check (char_length(bio) <= 200);
 
+-- 1b) Kolom updated_at + trigger (jejak kapan edit terjadi).
+alter table public.humba_posts add column if not exists updated_at timestamptz;
+alter table public.humba_comments add column if not exists updated_at timestamptz;
+alter table public.humba_groups add column if not exists updated_at timestamptz;
+alter table public.humba_group_posts add column if not exists updated_at timestamptz;
+create or replace function public.humba_set_updated_at()
+returns trigger language plpgsql as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+drop trigger if exists humba_posts_updated_at on public.humba_posts;
+create trigger humba_posts_updated_at before update on public.humba_posts
+  for each row execute function public.humba_set_updated_at();
+drop trigger if exists humba_comments_updated_at on public.humba_comments;
+create trigger humba_comments_updated_at before update on public.humba_comments
+  for each row execute function public.humba_set_updated_at();
+drop trigger if exists humba_groups_updated_at on public.humba_groups;
+create trigger humba_groups_updated_at before update on public.humba_groups
+  for each row execute function public.humba_set_updated_at();
+drop trigger if exists humba_group_posts_updated_at on public.humba_group_posts;
+create trigger humba_group_posts_updated_at before update on public.humba_group_posts
+  for each row execute function public.humba_set_updated_at();
+
 -- 2) Edit kiriman sendiri (dasar untuk tombol Edit di aplikasi;
 --    tombolnya sendiri belum dibuat, tapi API sudah mengizinkan).
 drop policy if exists "humba_posts_update_own" on public.humba_posts;
@@ -35,19 +60,19 @@ create policy "humba_posts_update_own" on public.humba_posts
           or (f.requester_id = wall_user_id and f.addressee_id = auth.uid()))))
   );
 revoke update on public.humba_posts from authenticated;
-grant update (body, image_url, video_url) on public.humba_posts to authenticated;
+grant update (body, image_url, video_url, updated_at) on public.humba_posts to authenticated;
 drop policy if exists "humba_comments_update_own" on public.humba_comments;
 create policy "humba_comments_update_own" on public.humba_comments
   for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
 revoke update on public.humba_comments from authenticated;
-grant update (body) on public.humba_comments to authenticated;
+grant update (body, updated_at) on public.humba_comments to authenticated;
 drop policy if exists "humba_groups_update_creator" on public.humba_groups;
 create policy "humba_groups_update_creator" on public.humba_groups
   for update to authenticated using (created_by = auth.uid()) with check (created_by = auth.uid());
 revoke update on public.humba_groups from authenticated;
-grant update (name, description) on public.humba_groups to authenticated;
+grant update (name, description, updated_at) on public.humba_groups to authenticated;
 drop policy if exists "humba_group_posts_update_own" on public.humba_group_posts;
 create policy "humba_group_posts_update_own" on public.humba_group_posts
   for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
 revoke update on public.humba_group_posts from authenticated;
-grant update (body) on public.humba_group_posts to authenticated;
+grant update (body, updated_at) on public.humba_group_posts to authenticated;

@@ -1652,12 +1652,12 @@ async function renderToko(t){
 function renderJual(t){
   t.innerHTML = `<div class="kartu"><h2>Pasang Barang</h2>
     <p class="muted" style="margin-bottom:10px">Barangmu tampil di Toko HUMBA. Pembeli menghubungimu lewat WhatsApp atau chat HUMBA — tidak ada pembayaran di dalam aplikasi.</p>
-    <div class="field"><label>Nama barang</label><input id="inNamaProduk" placeholder="contoh: Kopi Sumba 1 kg"></div>
+    <div class="field"><label>Nama barang</label><input id="inNamaProduk" maxlength="200" placeholder="contoh: Kopi Sumba 1 kg"></div>
     <div class="field"><label>Harga (Rp, angka saja)</label><input id="inHargaProduk" type="number" min="0" placeholder="contoh: 50000"></div>
     <div class="field"><label>Kategori</label><select id="inKatProduk">${KAT_PRODUK.slice(1).map((k) => `<option>${k}</option>`).join("")}</select></div>
-    <div class="field"><label>Keterangan</label><textarea id="inKetProduk" placeholder="Kondisi barang, berat, dll…"></textarea></div>
-    <div class="field"><label>Lokasi</label><input id="inLokasiProduk" placeholder="contoh: Waingapu"></div>
-    <div class="field"><label>No. WA penjual (aktif)</label><input id="inWAProduk" placeholder="contoh: 081234567890"></div>
+    <div class="field"><label>Keterangan</label><textarea id="inKetProduk" maxlength="2000" placeholder="Kondisi barang, berat, dll…"></textarea></div>
+    <div class="field"><label>Lokasi</label><input id="inLokasiProduk" maxlength="100" placeholder="contoh: Waingapu"></div>
+    <div class="field"><label>No. WA penjual (aktif)</label><input id="inWAProduk" maxlength="20" placeholder="contoh: 081234567890"></div>
     <button class="tombol" onclick="simpanProdukUI()">Pasang di Toko</button>
     <button class="tombol abu" style="margin-left:8px" onclick="tampil('toko')">Batal</button>
   </div>`;
@@ -1672,6 +1672,7 @@ async function simpanProdukUI(){
   if (nama.length < 2) { alert("Nama barang minimal 2 karakter."); return; }
   if (!harga || harga <= 0) { alert("Harga harus angka lebih dari 0."); return; }
   if (!wa) { alert("Isi nomor WA supaya pembeli bisa menghubungimu."); return; }
+  if (!/^[0-9+ -]+$/.test(wa)) { alert("No. WA hanya boleh angka, +, spasi, dan -."); return; }
   const err = await pasangProduk({ nama, harga, kategori, keterangan, lokasi, wa });
   if (err === "TABEL_BELUM_ADA") { alert("Toko belum aktif di cloud. Jalankan supabase/migrasi-toko.sql di SQL Editor Supabase untuk mengaktifkan Toko."); return; }
   if (err) { alert("Gagal memasang barang: " + err); return; }

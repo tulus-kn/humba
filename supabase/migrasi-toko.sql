@@ -33,6 +33,25 @@ create table if not exists public.humba_produk (
 );
 create index if not exists humba_produk_seller_idx on public.humba_produk (seller_id, created_at desc);
 create index if not exists humba_produk_created_idx on public.humba_produk (created_at desc);
+alter table public.humba_produk add column if not exists updated_at timestamptz;
+alter table public.humba_produk drop constraint if exists humba_produk_keterangan_chk;
+alter table public.humba_produk add constraint humba_produk_keterangan_chk check (char_length(keterangan) <= 2000);
+alter table public.humba_produk drop constraint if exists humba_produk_lokasi_chk;
+alter table public.humba_produk add constraint humba_produk_lokasi_chk check (char_length(lokasi) <= 100);
+alter table public.humba_produk drop constraint if exists humba_produk_wa_chk;
+alter table public.humba_produk add constraint humba_produk_wa_chk check (char_length(wa) <= 20 and wa ~ '^[0-9+ -]*$');
+alter table public.humba_produk drop constraint if exists humba_produk_kategori_chk;
+alter table public.humba_produk add constraint humba_produk_kategori_chk check (char_length(kategori) <= 50);
+create or replace function public.humba_set_updated_at()
+returns trigger language plpgsql as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+drop trigger if exists humba_produk_updated_at on public.humba_produk;
+create trigger humba_produk_updated_at before update on public.humba_produk
+  for each row execute function public.humba_set_updated_at();
 
 -- ============================================================
 -- Row Level Security (pola sama seperti schema.sql)
@@ -53,6 +72,8 @@ create policy "humba_produk_update_own" on public.humba_produk
 drop policy if exists "humba_produk_delete_own" on public.humba_produk;
 create policy "humba_produk_delete_own" on public.humba_produk
   for delete to authenticated using (seller_id = auth.uid());
+revoke update on public.humba_produk from authenticated;
+grant update (nama, harga, keterangan, lokasi, wa, kategori, updated_at) on public.humba_produk to authenticated;
 
 -- Realtime: supaya barang baru langsung muncul di Toko.
 do $$

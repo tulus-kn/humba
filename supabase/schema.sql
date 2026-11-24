@@ -55,6 +55,7 @@ create table if not exists public.humba_posts (
   body text not null,
   visibility text not null default 'public',
   created_at timestamptz not null default now(),
+  updated_at timestamptz,
   constraint humba_posts_body_chk check (char_length(body) between 1 and 2000),
   constraint humba_posts_visibility_chk check (visibility in ('public', 'friends'))
 );
@@ -69,6 +70,7 @@ create table if not exists public.humba_comments (
   user_id uuid not null references public.humba_profiles (id) on delete cascade,
   body text not null,
   created_at timestamptz not null default now(),
+  updated_at timestamptz,
   constraint humba_comments_body_chk check (char_length(body) between 1 and 500)
 );
 create index if not exists humba_comments_post_idx on public.humba_comments (post_id, created_at);
@@ -116,6 +118,7 @@ create table if not exists public.humba_group_posts (
   user_id uuid not null references public.humba_profiles (id) on delete cascade,
   body text not null,
   created_at timestamptz not null default now(),
+  updated_at timestamptz,
   constraint humba_group_posts_body_chk check (char_length(body) between 1 and 2000)
 );
 create index if not exists humba_group_posts_group_idx on public.humba_group_posts (group_id, created_at desc);
@@ -154,6 +157,27 @@ create table if not exists public.humba_pokes (
 );
 create index if not exists humba_pokes_to_idx on public.humba_pokes (to_id, created_at desc);
 
+-- Trigger: isi updated_at otomatis saat ada edit.
+create or replace function public.humba_set_updated_at()
+returns trigger language plpgsql as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+drop trigger if exists humba_posts_updated_at on public.humba_posts;
+create trigger humba_posts_updated_at before update on public.humba_posts
+  for each row execute function public.humba_set_updated_at();
+drop trigger if exists humba_comments_updated_at on public.humba_comments;
+create trigger humba_comments_updated_at before update on public.humba_comments
+  for each row execute function public.humba_set_updated_at();
+drop trigger if exists humba_groups_updated_at on public.humba_groups;
+create trigger humba_groups_updated_at before update on public.humba_groups
+  for each row execute function public.humba_set_updated_at();
+drop trigger if exists humba_group_posts_updated_at on public.humba_group_posts;
+create trigger humba_group_posts_updated_at before update on public.humba_group_posts
+  for each row execute function public.humba_set_updated_at();
+
 -- ============================================================
 -- Row Level Security
 -- ============================================================
@@ -181,6 +205,8 @@ create policy "humba_profiles_insert_own" on public.humba_profiles
 drop policy if exists "humba_profiles_update_own" on public.humba_profiles;
 create policy "humba_profiles_update_own" on public.humba_profiles
   for update to authenticated using (id = auth.uid()) with check (id = auth.uid());
+revoke update on public.humba_profiles from authenticated;
+grant update (display_name, bio, birthdate, avatar_url, cover_url, last_seen, rc_hash) on public.humba_profiles to authenticated;
 
 -- Status: Kabar Beranda dibaca semua user login; tulis/hapus
 -- hanya status sendiri (atau status di dinding sendiri).
@@ -218,7 +244,7 @@ create policy "humba_posts_update_own" on public.humba_posts
           or (f.requester_id = wall_user_id and f.addressee_id = auth.uid()))))
   );
 revoke update on public.humba_posts from authenticated;
-grant update (body, image_url, video_url, visibility) on public.humba_posts to authenticated;
+grant update (body, image_url, video_url, visibility, updated_at) on public.humba_posts to authenticated;
 
 -- Komentar: dibaca semua; tulis sebagai diri sendiri;
 -- hapus hanya komentar sendiri atau komentar di status sendiri.
@@ -238,7 +264,7 @@ drop policy if exists "humba_comments_update_own" on public.humba_comments;
 create policy "humba_comments_update_own" on public.humba_comments
   for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
 revoke update on public.humba_comments from authenticated;
-grant update (body) on public.humba_comments to authenticated;
+grant update (body, updated_at) on public.humba_comments to authenticated;
 
 -- Suka: dibaca semua; tambah/hapus hanya sebagai diri sendiri.
 drop policy if exists "humba_likes_select_all" on public.humba_likes;
@@ -287,7 +313,7 @@ drop policy if exists "humba_groups_update_creator" on public.humba_groups;
 create policy "humba_groups_update_creator" on public.humba_groups
   for update to authenticated using (created_by = auth.uid()) with check (created_by = auth.uid());
 revoke update on public.humba_groups from authenticated;
-grant update (name, description) on public.humba_groups to authenticated;
+grant update (name, description, updated_at) on public.humba_groups to authenticated;
 
 -- Anggota grup: semua boleh membaca daftar anggota; gabung
 -- hanya sebagai diri sendiri.
@@ -321,7 +347,7 @@ drop policy if exists "humba_group_posts_update_own" on public.humba_group_posts
 create policy "humba_group_posts_update_own" on public.humba_group_posts
   for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
 revoke update on public.humba_group_posts from authenticated;
-grant update (body) on public.humba_group_posts to authenticated;
+grant update (body, updated_at) on public.humba_group_posts to authenticated;
 
 -- Catatan (Notes): catatan pribadi hanya pemiliknya; catatan
 -- publik (is_public) dibaca semua user login.
@@ -334,6 +360,8 @@ create policy "humba_notes_insert_own" on public.humba_notes
 drop policy if exists "humba_notes_update_own" on public.humba_notes;
 create policy "humba_notes_update_own" on public.humba_notes
   for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+revoke update on public.humba_notes from authenticated;
+grant update (title, body, is_public, updated_at) on public.humba_notes to authenticated;
 drop policy if exists "humba_notes_delete_own" on public.humba_notes;
 create policy "humba_notes_delete_own" on public.humba_notes
   for delete to authenticated using (user_id = auth.uid());
