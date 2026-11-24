@@ -398,6 +398,8 @@ details.supabase input{background:#26262b;color:var(--teks);border-color:#3a3a40
     <button onclick="pilihAlbum()">🖼️ Pilih dari Album</button>
     <button onclick="pilihKamera()">📷 Kamera</button>
     <button onclick="pilihTeks()">✏️ Teks</button>
+    <hr style="margin:8px 0;border:0;border-top:1px solid #eee">
+    <button onclick="pilihJualan()">🛍️ Jualan — Pasang Barang</button>
     <button class="batal" onclick="tutupLembarPlus()">Batal</button>
   </div>
 </div>
@@ -1357,8 +1359,9 @@ function tutupDrawer(){ const o = $("drawerOverlay"), d = $("drawer"); if (o) o.
 function bukaLembarPlus(){ $("sheetPlus").style.display = "block"; }
 function tutupLembarPlus(){ $("sheetPlus").style.display = "none"; }
 function pilihTeks(){ tutupLembarPlus(); tabBeranda = "jelajah"; tampil("beranda").then(() => { const el = $("inStatus"); if (el) el.focus(); }); }
-function pilihAlbum(){ tutupLembarPlus(); alert("Unggah foto belum didukung di HUMBA — status berupa teks, barang dipasang tanpa foto. Membuka form Jualan."); tampil("jual"); }
-function pilihKamera(){ tutupLembarPlus(); alert("Kamera belum didukung di HUMBA — status berupa teks, barang dipasang tanpa foto. Membuka form Jualan."); tampil("jual"); }
+function pilihAlbum(){ tutupLembarPlus(); alert("Foto belum bisa diunggah untuk status — status berupa teks saja."); tabBeranda = "jelajah"; tampil("beranda").then(() => { const el = $("inStatus"); if (el) el.focus(); }); }
+function pilihKamera(){ tutupLembarPlus(); alert("Foto belum bisa diunggah untuk status — status berupa teks saja."); tabBeranda = "jelajah"; tampil("beranda").then(() => { const el = $("inStatus"); if (el) el.focus(); }); }
+function pilihJualan(){ tutupLembarPlus(); tampil("jual"); }
 
 /* ---------- Toko (Market) ---------- */
 let tokoKat = "Semua", tokoCari = "";
