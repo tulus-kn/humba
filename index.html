@@ -293,6 +293,7 @@ details.supabase input{background:#26262b;color:var(--teks);border-color:#3a3a40
       <div class="field"><label>Password (min. 6 karakter)</label><input id="inPass" type="password" placeholder="••••" autocomplete="current-password"></div>
       <div class="field" id="fieldTgl" style="display:none"><label>Tanggal lahir (untuk pengingat ulang tahun)</label><input id="inTgl" type="date"></div>
       <button class="tombol tombol-penuh" id="btnMasuk" onclick="masuk()">Masuk</button>
+      <a href="#" id="linkLupa" style="display:block;text-align:right;margin-top:10px;color:#1287c8;font-size:13px" onclick="lupaPass();return false">Lupa Password?</a>
       <button class="tombol tombol-penuh hijau" id="btnDaftar" style="display:none" onclick="daftar()">Daftar Akun Baru</button>
       <button class="tombol tombol-penuh abu" id="btnToggleDaftar" style="margin-top:10px" onclick="toggleModeDaftar(event)">Belum punya akun? Daftar di sini</button>
       <div id="authMode" style="display:none;margin-top:12px"></div>
@@ -410,6 +411,23 @@ details.supabase input{background:#26262b;color:var(--teks);border-color:#3a3a40
   </div>
 </div>
 <div id="overlayProduk" class="overlay" style="display:none" onclick="if(event.target===this)tutupProduk()"><div class="sheet" id="isiProduk"></div></div>
+<div id="overlayKode" class="overlay" style="display:none" onclick="if(event.target===this)tutupKode()"><div class="sheet"><div class="isi-sheet">
+  <h3>Kode pemulihan kamu</h3>
+  <p class="muted">Simpan kode ini (screenshot atau catatan). Dipakai untuk reset password kalau kamu lupa. Kode <b>hanya tampil sekali</b>; kalau hilang, buat kode baru di Pengaturan.</p>
+  <div id="kodeTeks" style="font-size:22px;font-weight:700;text-align:center;letter-spacing:2px;margin:12px 0">HUMBA-XXXX-XXXX</div>
+  <button class="tombol tombol-penuh" onclick="salinKode()">Salin Kode</button>
+  <button class="tombol tombol-penuh abu" style="margin-top:8px" onclick="tutupKode()">Sudah saya simpan</button>
+</div></div></div>
+<div id="overlayReset" class="overlay" style="display:none" onclick="if(event.target===this)tutupReset()"><div class="sheet"><div class="isi-sheet">
+  <h3>Reset password</h3>
+  <p class="muted">Masukkan username, kode pemulihan, dan password baru. Status, teman, dan barang di Toko tidak hilang.</p>
+  <div class="field"><label>Username</label><input id="rsUser" placeholder="username" autocapitalize="none" autocomplete="username"></div>
+  <div class="field"><label>Kode pemulihan</label><input id="rsKode" placeholder="HUMBA-XXXX-XXXX" autocapitalize="characters" autocomplete="off"></div>
+  <div class="field"><label>Password baru</label><input id="rsPass" type="password" placeholder="Password baru (min. 6 karakter)" autocomplete="new-password"></div>
+  <div id="rsPesan" class="pesan-info merah" style="display:none;margin-top:10px"></div>
+  <button class="tombol tombol-penuh" onclick="kirimReset()">Reset Password</button>
+  <button class="tombol tombol-penuh abu" style="margin-top:8px" onclick="tutupReset()">Batal</button>
+</div></div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/dist/umd/supabase.min.js"></script>
 <script>
@@ -426,6 +444,9 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":
 const urlCss = (u) => esc(String(u ?? "").replace(/['"()\\\s<>]/g, (c) => "%" + c.charCodeAt(0).toString(16).padStart(2, "0")));
 const WARNA_AVATAR = ["#ff5a72","#ff8a4c","#3ec08a","#4a90e2","#8e6ce8","#e2596e","#2bb3a3","#7a8aa0"];
 const warnaAvatar = (nama) => { let h = 0; for (const c of String(nama)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return WARNA_AVATAR[h % WARNA_AVATAR.length]; };
+async function sha256Hex(teks){ const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(teks)); return [...new Uint8Array(buf)].map((x) => x.toString(16).padStart(2, "0")).join(""); }
+function normKode(k){ return String(k || "").toUpperCase().replace(/[^A-Z0-9]/g, ""); }
+function buatKodePemulihan(){ const A = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"; let s = ""; for (let i = 0; i < 8; i++) s += A[Math.floor(Math.random() * A.length)]; return "HUMBA-" + s.slice(0, 4) + "-" + s.slice(4); }
 const IKON = (d, aktif) => `<svg viewBox="0 0 24 24" fill="${aktif ? "currentColor" : "none"}" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
 const ikonSuka = (aktif) => IKON(`<path d="M12 20.3S4.6 15.8 4.6 10.9A4.1 4.1 0 0 1 12 8.2a4.1 4.1 0 0 1 7.4 2.7c0 4.9-7.4 9.4-7.4 9.4Z"/>`, aktif);
 const ikonKomen = () => IKON(`<path d="M20 11.9c0 3.7-3.6 6.7-8 6.7-1 0-2-.1-2.9-.4L5 19.8l1.2-3.2A6.3 6.3 0 0 1 4 11.9c0-3.7 3.6-6.7 8-6.7s8 3 8 6.7Z"/>`);
@@ -500,6 +521,7 @@ function tampilAuth(){
   $("fieldNama").style.display = modeDaftar ? "block" : "none";
   $("fieldTgl").style.display = modeDaftar ? "block" : "none";
   $("btnMasuk").style.display = modeDaftar ? "none" : "block";
+  $("linkLupa").style.display = modeDaftar ? "none" : "block";
   $("btnDaftar").style.display = modeDaftar ? "block" : "none";
   $("btnToggleDaftar").textContent = modeDaftar ? "Sudah punya akun? Masuk di sini" : "Belum punya akun? Daftar di sini";
   $("authMode").style.display = "block";
@@ -520,10 +542,10 @@ async function daftar(){
     if (mode === "local") {
       const d = dbLokal();
       if (d.users.some((u) => u.username === username)) { infoAuth(`<div class="pesan-info merah">Username sudah dipakai. Pilih username lain.</div>`); return; }
-      const u = { id: uidBaru(), username, display_name: nama, bio: "", birthdate: tgl, avatar_color: warnaAvatar(nama), last_seen: sekarang(), created_at: sekarang(), pass };
+      const kodeRc = buatKodePemulihan();
+      const u = { id: uidBaru(), username, display_name: nama, bio: "", birthdate: tgl, avatar_color: warnaAvatar(nama), last_seen: sekarang(), created_at: sekarang(), pass, rcHash: await sha256Hex(normKode(kodeRc)) };
       d.users.push(u); simpanLokal(d);
-      sesiLokal = u.id; try { localStorage.setItem("ch.sesi", u.id); } catch(e){}
-      me = profilLokal(u); masukAplikasi();
+      tampilKodePemulihan(kodeRc, () => { sesiLokal = u.id; try { localStorage.setItem("ch.sesi", u.id); } catch(e){} me = profilLokal(u); masukAplikasi(); });
       return;
     }
     const email = username + "@humba.local";
@@ -534,7 +556,11 @@ async function daftar(){
     const { error: e2 } = await sb.from("humba_profiles").insert({ id: uid, username, display_name: nama, bio: "", birthdate: tgl, avatar_color: warnaAvatar(nama), last_seen: sekarang() });
     if (e2) { infoAuth(`<div class="pesan-info merah">Akun auth dibuat tapi profil gagal: ${esc(e2.message)}. Coba masuk — kalau tetap gagal, beri tahu admin.</div>`); return; }
     await muatProfilCloud(uid);
-    masukAplikasi();
+    const kodeRc = buatKodePemulihan();
+    const rcHash = await sha256Hex(normKode(kodeRc));
+    const { error: e3 } = await sb.from("humba_profiles").update({ rc_hash: rcHash }).eq("id", uid);
+    if (e3) { masukAplikasi(); alert("Kode pemulihan belum tersimpan (migrasi reset password belum dijalankan di Supabase). Setelah migrasi jalan, buat kode di Pengaturan → Keamanan Akun."); return; }
+    tampilKodePemulihan(kodeRc, () => masukAplikasi());
   } catch(e){ infoAuth(`<div class="pesan-info merah">Gagal daftar: ${esc(e.message || e)}</div>`); }
   finally { btn.disabled = false; btn.textContent = "Daftar Akun Baru"; }
 }
@@ -560,6 +586,64 @@ async function masuk(){
     masukAplikasi();
   } catch(e){ infoAuth(`<div class="pesan-info merah">Gagal masuk: ${esc(e.message || e)}</div>`); }
   finally { btn.disabled = false; btn.textContent = "Masuk"; }
+}
+/* ---------- Reset password pakai kode pemulihan (ala Pos-El) ---------- */
+let kodeCallback = null;
+function tampilKodePemulihan(kode, cb){ kodeCallback = cb || null; $("kodeTeks").textContent = kode; $("overlayKode").style.display = "block"; }
+function salinKode(){
+  const teks = $("kodeTeks").textContent;
+  let ok = false;
+  try { navigator.clipboard.writeText(teks); ok = true; } catch(e){}
+  if (!ok) { const ta = document.createElement("textarea"); ta.value = teks; ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); ok = true; } catch(e){} document.body.removeChild(ta); }
+  alert(ok ? "Kode disalin: " + teks : "Salin manual: " + teks);
+}
+function tutupKode(){ $("overlayKode").style.display = "none"; const cb = kodeCallback; kodeCallback = null; if (cb) cb(); }
+function lupaPass(){ bukaReset(); }
+function bukaReset(){ $("overlayReset").style.display = "block"; const p = $("rsPesan"); if (p) { p.style.display = "none"; p.textContent = ""; } }
+function tutupReset(){ $("overlayReset").style.display = "none"; }
+async function kirimReset(){
+  const u = ($("rsUser").value || "").trim().toLowerCase();
+  const k = $("rsKode").value || "";
+  const p = $("rsPass").value || "";
+  const pesan = (t) => { const el = $("rsPesan"); el.style.display = "block"; el.textContent = t; };
+  if (!u || !k || !p) return pesan("Isi username, kode, dan password baru.");
+  if (p.length < 6) return pesan("Password baru minimal 6 karakter.");
+  if (mode === "local") return resetLokal(u, k, p, pesan);
+  if (mode !== "cloud") return pesan("Reset butuh koneksi Supabase. Pastikan aplikasi online.");
+  try {
+    const { data, error } = await sb.rpc("humba_reset_password", { p_username: u, p_kode: k, p_baru: p });
+    if (error) throw error;
+    if (data === "ok") { tutupReset(); $("inUser").value = u; infoAuth(`<div class="pesan-info">Password berhasil direset. Silakan masuk dengan password baru.</div>`); }
+    else if (data === "kode_salah") pesan("Kode pemulihan salah. Periksa huruf/angkanya.");
+    else if (data === "tidak_ada") pesan("Username tidak ditemukan.");
+    else if (data === "belum_ada_kode") pesan("Akun ini belum punya kode pemulihan (dibuat sebelum fitur ini). Minta admin reset manual, atau masuk lalu buat kode di Pengaturan.");
+    else if (data === "terlalu_banyak") pesan("Terlalu banyak percobaan. Coba lagi 15 menit lagi.");
+    else if (data === "password_pendek") pesan("Password baru minimal 6 karakter.");
+    else pesan("Gagal reset: " + String(data));
+  } catch(e){ pesan("Gagal reset: " + (e.message || e) + " — jalankan dulu migrasi reset password di Supabase."); }
+}
+async function resetLokal(u, k, p, pesan){
+  const db = dbLokal();
+  if (!db) return pesan("Tidak ada akun lokal di HP ini.");
+  const usr = db.users.find((x) => x.username === u);
+  if (!usr) return pesan("Username tidak ditemukan di HP ini.");
+  const h = await sha256Hex(normKode(k));
+  if (!usr.rcHash || usr.rcHash !== h) return pesan("Kode pemulihan salah.");
+  usr.pass = p; simpanLokal(db);
+  tutupReset(); $("inUser").value = u;
+  infoAuth(`<div class="pesan-info">Password berhasil direset. Silakan masuk.</div>`);
+}
+async function kodeBaruAkun(){
+  const kode = buatKodePemulihan();
+  const h = await sha256Hex(normKode(kode));
+  if (mode === "cloud" && sb) {
+    const { data, error } = await sb.rpc("humba_ganti_kode", { p_hash: h });
+    if (error || data !== "ok") { alert("Gagal membuat kode baru: " + (error ? error.message : data) + " — jalankan migrasi reset password dulu."); return; }
+  } else if (mode === "local") {
+    const d = dbLokal();
+    if (d) { const u = d.users.find((x) => x.id === me.id); if (u) { u.rcHash = h; simpanLokal(d); } }
+  }
+  tampilKodePemulihan(kode, null);
 }
 function profilLokal(u){ return { id: u.id, username: u.username, display_name: u.display_name, bio: u.bio || "", birthdate: u.birthdate || null, avatar_color: u.avatar_color || warnaAvatar(u.display_name), avatar_url: u.avatar_url || null, cover_url: u.cover_url || null, last_seen: u.last_seen || null, created_at: u.created_at || null }; }
 async function muatProfilCloud(uid){
@@ -1795,6 +1879,8 @@ function renderPengaturan(t){
     <button class="menu-baris" onclick="tampil('pengaturan');setTimeout(()=>{const e=$('inPassBaru');if(e)e.focus();},50)">🔐 Keamanan Akun <span class="panah">›</span></button>
     <div class="field" style="margin-top:10px"><label>Ganti Password</label><input id="inPassBaru" type="password" placeholder="Password baru (min. 6 karakter)"></div>
     <button class="tombol kecil" onclick="gantiPasswordUI()">Simpan Password Baru</button>
+    <button class="tombol kecil abu" style="margin-top:8px" onclick="kodeBaruAkun()">Buat Kode Pemulihan Baru</button>
+    <p class="muted" style="margin-top:4px">Kode pemulihan dipakai untuk reset password kalau kamu lupa. Kode hanya tampil sekali — simpan baik-baik.</p>
     <h4 style="margin-top:16px">Umum</h4>
     <div class="menu-baris">🌐 Bahasa <span class="panah">Bahasa Indonesia</span></div>
     <div class="menu-baris">🔔 Notifikasi <span class="panah">${muatJSON("ch.notif", true) ? "Aktif" : "Mati"} · <a href="#" onclick="toggleNotif(event)">ubah</a></span></div>

@@ -49,6 +49,9 @@ Jejaring sosial nostalgia ala Facebook 2009, tersambung ke Supabase supaya akun 
 7. **Mengaktifkan foto & video di status (supaya tersimpan antar HP): SQL Editor → New query → tempel seluruh isi file `supabase/migrasi-foto-video-status.sql` → Run.** File ini hanya menambah dua kolom (`image_url`, `video_url`) di tabel `humba_posts` dan melonggarkan aturan supaya status boleh hanya foto/video tanpa teks. Tanpa langkah ini, status berfoto/video tetap jalan dalam Mode Lokal, tapi di cloud gagal dengan pesan migrasi — aplikasi tidak crash.
 
 8. **Mengaktifkan batasan teks & edit sendiri (satu kali): SQL Editor → New query → tempel seluruh isi file `supabase/migrasi-batasan-dan-edit.sql` → Run.** Menambah batasan nama tampilan 2–32 karakter dan bio maks. 200 karakter di database, plus policy UPDATE supaya pengguna bisa mengedit status, komentar, grup, dan kiriman grup miliknya sendiri (tombol Edit di aplikasi belum dibuat).
+9. **Mengaktifkan reset password pakai kode pemulihan (satu kali): SQL Editor → New query → tempel seluruh isi file `supabase/migrasi-reset-password.sql` → Run.** Menambah kolom `rc_hash` di `humba_profiles` dan dua fungsi database (`humba_reset_password`, `humba_ganti_kode`). Saat daftar, aplikasi membuat kode `HUMBA-XXXX-XXXX` dan hanya menyimpan hash-nya — kode aslinya tidak pernah disimpan. Kalau lupa password, klik "Lupa Password?" di halaman masuk, masukkan username + kode + password baru. 5x kode salah = blokir 15 menit. Akun lama yang dibuat sebelum fitur ini tidak punya kode — reset manual lewat dashboard Supabase.
+
+**Jalan pintas:** langkah 4–9 sudah digabung dalam **satu file `supabase/migrasi-semua.sql`** — tempel file itu saja, tidak perlu tempel satu-satu.
 
 ## Cara pakai (pengguna)
 
@@ -61,5 +64,5 @@ Jejaring sosial nostalgia ala Facebook 2009, tersambung ke Supabase supaya akun 
 - Butuh internet: aplikasi memuat Supabase lewat CDN dan menyimpan data di Supabase.
 - Sinkron antar HP **belum teruji end-to-end dari server pembuat** (domain `*.supabase.co` diblokir dari sana). Uji penentunya: daftar 2 akun berbeda di 2 HP, tambah teman, kirim pesan, dan tulis status — semuanya harus muncul di HP satunya.
 - Online dihitung dari `last_seen` (diperbarui tiap 60 detik selama aplikasi terbuka; offline setelah ~2 menit tidak aktif).
-- Ganti password bisa dari Pengaturan → Keamanan Akun. Yang tidak ada hanya **lupa password** (tidak ada reset lewat email): kalau lupa, reset lewat dashboard Supabase → Authentication → Users.
+- Ganti password bisa dari Pengaturan → Keamanan Akun. Kalau **lupa password**, klik "Lupa Password?" di halaman masuk lalu masukkan username + kode pemulihan + password baru (kode dibuat saat daftar dan hanya tampil sekali; kalau hilang, buat kode baru di Pengaturan → Keamanan Akun). Tidak ada reset lewat email karena auth memakai email buatan. Akun lama tanpa kode pemulihan tetap harus direset manual lewat dashboard Supabase → Authentication → Users.
 - Setiap push ke `main` diperiksa otomatis oleh GitHub Actions (`.github/workflows/check.yml`): sintaks JavaScript di `index.html` harus lolos `node --check`.
