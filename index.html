@@ -193,7 +193,7 @@ input[type=checkbox]{accent-color:var(--merah);width:16px;height:16px;vertical-a
       <div class="field" id="fieldTgl" style="display:none"><label>Tanggal lahir (untuk pengingat ulang tahun)</label><input id="inTgl" type="date"></div>
       <button class="tombol tombol-penuh" id="btnMasuk" onclick="masuk()">Masuk</button>
       <button class="tombol tombol-penuh hijau" id="btnDaftar" style="display:none" onclick="daftar()">Daftar Akun Baru</button>
-      <p class="tengah kecil" style="margin-top:12px"><a href="#" class="link-kecil" onclick="toggleModeDaftar(event)">Daftar hanya pakai username, nama, dan password. Tanpa email, tanpa nomor HP.</a></p>
+      <button class="tombol tombol-penuh abu" id="btnToggleDaftar" style="margin-top:10px" onclick="toggleModeDaftar(event)">Belum punya akun? Daftar di sini</button>
       <div id="authMode" style="display:none;margin-top:12px"></div>
       <details class="supabase">
         <summary>Pengaturan Supabase (untuk sinkron antar HP)</summary>
@@ -358,6 +358,7 @@ function tampilAuth(){
   $("fieldTgl").style.display = modeDaftar ? "block" : "none";
   $("btnMasuk").style.display = modeDaftar ? "none" : "block";
   $("btnDaftar").style.display = modeDaftar ? "block" : "none";
+  $("btnToggleDaftar").textContent = modeDaftar ? "Sudah punya akun? Masuk di sini" : "Belum punya akun? Daftar di sini";
   $("authMode").style.display = "block";
   $("authMode").innerHTML = modeDaftar
     ? `<div class="pesan-info kuning">Mode daftar: isi username, nama tampilan, password, dan tanggal lahir (opsional). Setelah daftar, kamu langsung masuk.</div>`
