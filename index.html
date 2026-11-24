@@ -379,7 +379,8 @@ async function daftar(){
       if (d.users.some((u) => u.username === username)) { infoAuth(`<div class="pesan-info merah">Username sudah dipakai. Pilih username lain.</div>`); return; }
       const u = { id: uidBaru(), username, display_name: nama, bio: "", birthdate: tgl, avatar_color: warnaAvatar(nama), last_seen: sekarang(), created_at: sekarang(), pass };
       d.users.push(u); simpanLokal(d);
-      sesiLokal = u.id; me = profilLokal(u); masukAplikasi();
+      sesiLokal = u.id; try { localStorage.setItem("ch.sesi", u.id); } catch(e){}
+      me = profilLokal(u); masukAplikasi();
       return;
     }
     const email = username + "@humba.local";
@@ -404,7 +405,8 @@ async function masuk(){
       const d = dbLokal();
       const u = d.users.find((x) => x.username === username);
       if (!u || u.pass !== pass) { infoAuth(`<div class="pesan-info merah">Gagal masuk: username atau password salah. Daftar dulu kalau belum punya akun.</div>`); return; }
-      sesiLokal = u.id; me = profilLokal(u); masukAplikasi();
+      sesiLokal = u.id; try { localStorage.setItem("ch.sesi", u.id); } catch(e){}
+      me = profilLokal(u); masukAplikasi();
       return;
     }
     const email = username + "@humba.local";
@@ -998,9 +1000,27 @@ window.addEventListener("DOMContentLoaded", async () => {
   tampilAuth();
   const ok = await initSupabase();
   if (pilihanLokal) return;
-  if (ok) { mode = "cloud"; infoAuth(`<div class="pesan-info hijau">☁️ Tersambung ke Supabase. Silakan daftar atau masuk.</div>`); }
+  if (ok) {
+    mode = "cloud";
+    try {
+      const { data: { session } } = await sb.auth.getSession();
+      if (session && session.user) {
+        const okProfil = await muatProfilCloud(session.user.id);
+        if (okProfil) { masukAplikasi(); return; }
+      }
+    } catch(e){}
+    infoAuth(`<div class="pesan-info hijau">☁️ Tersambung ke Supabase. Silakan daftar atau masuk.</div>`);
+  }
   else {
     mode = "local";
+    try {
+      const sid = localStorage.getItem("ch.sesi");
+      if (sid) {
+        const d = dbLokal();
+        const u = d.users.find((x) => x.id === sid);
+        if (u) { sesiLokal = u.id; me = profilLokal(u); masukAplikasi(); return; }
+      }
+    } catch(e){}
     infoAuth(`<div class="pesan-info kuning">⚠️ Belum tersambung ke Supabase (tabel belum dibuat atau kunci belum aktif). Aplikasi jalan dalam <b>Mode Lokal (demo)</b> — akun hanya tersimpan di HP ini. Jalankan <b>supabase/schema.sql</b> di SQL Editor lalu muat ulang halaman ini untuk mengaktifkan sinkron antar HP.</div>`);
   }
 });
