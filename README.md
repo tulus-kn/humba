@@ -11,7 +11,7 @@ Jejaring sosial nostalgia ala Facebook 2009, tersambung ke Supabase supaya akun 
 - Daftar hanya pakai **username + nama + password** (tanpa email, tanpa nomor HP). Auth memakai email buatan `username@humba.local`.
 - **Kabar Beranda:** tulis status, suka (like), komentar, hapus status sendiri.
 - **Teman:** cari pengguna, tambah teman, terima/tolak permintaan.
-- **Profil:** bio, tanggal lahir, dinding (teman bisa menulis di dindingmu).
+- **Profil:** bio, tanggal lahir, dinding (teman bisa menulis di dindingmu), **foto profil dan foto sampul** (ketuk foto/sampul di halaman Saya atau Profil untuk mengganti; foto diperkecil otomatis sebelum disimpan).
 - **Grup:** buat grup, gabung grup, kirim kiriman di dalam grup.
 - **Catatan (Notes):** tulis catatan pribadi atau publikasikan.
 - **Pesan Masuk:** chat pribadi antar pengguna.
@@ -40,7 +40,8 @@ Jejaring sosial nostalgia ala Facebook 2009, tersambung ke Supabase supaya akun 
    - Semua tabel memakai prefix `humba_` (`humba_profiles`, `humba_posts`, …) supaya tidak bentrok dengan tabel Andi Kore (`profiles`) dan Pos-El (`posel_*`).
 3. **Authentication → Settings → "Confirm email" SUDAH mati** (akun memakai email buatan, jadi konfirmasi email tidak akan pernah sampai). Tidak perlu diubah lagi.
 4. **Mengaktifkan Toko (opsional, kalau mau jualan antar HP): SQL Editor → New query → tempel seluruh isi file `supabase/migrasi-toko.sql` → Run.** File ini hanya menambah tabel `humba_produk` (tidak menyentuh tabel lama). Tanpa langkah ini, Toko tetap jalan dalam Mode Lokal (produk hanya di HP itu) dan di cloud tampil pesan "jalankan supabase/migrasi-toko.sql" — aplikasi tidak crash.
-4. **Kunci anon SUDAH tertanam** di dalam aplikasi (`index.html`, `DEFAULT_ANON_KEY`). Pengguna tidak perlu menempel kunci apa pun — buka aplikasi dan langsung daftar.
+5. **Mengaktifkan foto profil & sampul (supaya tersimpan antar HP): SQL Editor → New query → tempel seluruh isi file `supabase/migrasi-foto-profil.sql` → Run.** File ini hanya menambah dua kolom (`avatar_url`, `cover_url`) di tabel `humba_profiles` (tidak menyentuh tabel lain, tidak mengubah RLS). Tanpa langkah ini, foto tetap bisa diganti dalam Mode Lokal (tersimpan di HP itu), tapi di cloud tampil pesan "jalankan supabase/migrasi-foto-profil.sql" — aplikasi tidak crash.
+6. **Kunci anon SUDAH tertanam** di dalam aplikasi (`index.html`, `DEFAULT_ANON_KEY`). Pengguna tidak perlu menempel kunci apa pun — buka aplikasi dan langsung daftar.
 
 ## Cara pakai (pengguna)
 

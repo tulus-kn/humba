@@ -68,6 +68,13 @@ input,textarea,select{font-family:inherit;font-size:15px;color:inherit}
 .avatar.kecil{width:30px;height:30px;font-size:13px}
 .avatar svg{width:58%;height:58%}
 .avatar.besar{width:78px;height:78px;font-size:31px;box-shadow:0 0 0 3px #fff,0 0 0 4px #ffe2e6}
+.avatar{overflow:hidden}
+.avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.sampul{height:150px;margin:-14px -14px 0;border-radius:16px 16px 0 0;background:linear-gradient(135deg,#ff5b6e,#ff2442);background-size:cover;background-position:center;position:relative;cursor:pointer;overflow:hidden}
+.sampul.kosong{display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.9);font-size:13px}
+.ganti-sampul{position:absolute;right:10px;bottom:10px;background:rgba(0,0,0,.55);color:#fff;border:0;border-radius:20px;padding:6px 12px;font-size:13px}
+.foto-profil-wrap{position:relative;display:inline-block;cursor:pointer}
+.lencana-kamera{position:absolute;right:2px;bottom:2px;background:var(--merah);color:#fff;border:2px solid #fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px}
 .baris{display:flex;gap:10px;align-items:flex-start}
 .baris-tengah{display:flex;gap:10px;align-items:center}
 .nama{font-weight:700;color:var(--teks)}
@@ -302,6 +309,8 @@ details.supabase input{background:#26262b;color:var(--teks);border-color:#3a3a40
 
 <!-- ================= APLIKASI UTAMA ================= -->
 <div id="layarApp" style="display:none">
+  <input type="file" id="inFotoProfil" accept="image/*" style="display:none" onchange="fotoDipilih(this,'profil')">
+  <input type="file" id="inFotoSampul" accept="image/*" style="display:none" onchange="fotoDipilih(this,'sampul')">
   <div class="bingkai">
     <div class="atas">
       <div class="topbar">
@@ -413,7 +422,9 @@ const ikonKomen = () => IKON(`<path d="M20 11.9c0 3.7-3.6 6.7-8 6.7-1 0-2-.1-2.9
 const ikonGrup = () => `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.2" r="3"/><path d="M3.6 20c0-3.1 2.4-5.2 5.4-5.2s5.4 2.1 5.4 5.2"/><circle cx="17.2" cy="9.2" r="2.2"/><path d="M15.3 20c.2-2.6 1.8-4.1 3.9-4.1"/></svg>`;
 const ikonCatatan = () => `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3.4" width="14" height="17.2" rx="2.2"/><path d="M8.6 8.4h6.8M8.6 12.5h6.8M8.6 16.6h4"/></svg>`;
 const ikonPoke = () => IKON(`<path d="M9 11.2V5.6a1.5 1.5 0 0 1 3 0v4.6"/><path d="M12 10.2V4.6a1.5 1.5 0 0 1 3 0v5.6"/><path d="M15 10.2V6.6a1.5 1.5 0 0 1 3 0v6.4c0 4-2.7 6.6-6 6.6-2 0-3.7-.8-4.8-2.4L4.9 13a1.4 1.4 0 0 1 2.2-1.7L9 13.4"/>`);
-const avatarHtml = (p, cls) => `<span class="avatar ${cls||""}" style="background:${p.avatar_color||warnaAvatar(p.display_name||p.username)}">${esc((p.display_name||p.username||"?")[0].toUpperCase())}</span>`;
+const avatarHtml = (p, cls) => (p && p.avatar_url)
+  ? `<span class="avatar ${cls||""}"><img src="${esc(p.avatar_url)}" alt=""></span>`
+  : `<span class="avatar ${cls||""}" style="background:${p.avatar_color||warnaAvatar(p.display_name||p.username)}">${esc((p.display_name||p.username||"?")[0].toUpperCase())}</span>`;
 const tglIndo = (d) => { try { return new Date(d).toLocaleDateString("id-ID",{day:"numeric",month:"long",year:"numeric"}); } catch(e){ return String(d||""); } };
 const waktuRelatif = (iso) => { const s = Math.floor((Date.now()-new Date(iso).getTime())/1000); if (s < 60) return "baru saja"; if (s < 3600) return Math.floor(s/60)+" mnt lalu"; if (s < 86400) return Math.floor(s/3600)+" jam lalu"; const h = Math.floor(s/86400); if (h < 30) return h+" hari lalu"; return tglIndo(iso); };
 const jamSingkat = (iso) => { try { return new Date(iso).toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit"}); } catch(e){ return ""; } };
@@ -539,7 +550,7 @@ async function masuk(){
   } catch(e){ infoAuth(`<div class="pesan-info merah">Gagal masuk: ${esc(e.message || e)}</div>`); }
   finally { btn.disabled = false; btn.textContent = "Masuk"; }
 }
-function profilLokal(u){ return { id: u.id, username: u.username, display_name: u.display_name, bio: u.bio || "", birthdate: u.birthdate || null, avatar_color: u.avatar_color || warnaAvatar(u.display_name), last_seen: u.last_seen || null, created_at: u.created_at || null }; }
+function profilLokal(u){ return { id: u.id, username: u.username, display_name: u.display_name, bio: u.bio || "", birthdate: u.birthdate || null, avatar_color: u.avatar_color || warnaAvatar(u.display_name), avatar_url: u.avatar_url || null, cover_url: u.cover_url || null, last_seen: u.last_seen || null, created_at: u.created_at || null }; }
 async function muatProfilCloud(uid){
   const { data, error } = await sb.from("humba_profiles").select("*").eq("id", uid).single();
   if (error || !data) return false;
@@ -965,7 +976,10 @@ async function renderProfil(t, userId){
   const semua = {}; (await semuaProfil()).forEach((x) => semua[x.id] = x);
   t.innerHTML = `
   <div class="kartu">
-    <div class="baris">${avatarHtml(p, "besar")}
+    ${saya
+      ? `<div class="sampul ${p.cover_url ? "" : "kosong"}" ${p.cover_url ? `style="background-image:url('${esc(p.cover_url)}')"` : ""} onclick="pilihFoto('sampul')">${p.cover_url ? `<button class="ganti-sampul" onclick="event.stopPropagation();pilihFoto('sampul')">📷 Ganti Sampul</button>` : `<span>📷 Ketuk untuk pasang foto sampul</span>`}</div>`
+      : (p.cover_url ? `<div class="sampul" style="background-image:url('${esc(p.cover_url)}')"></div>` : "")}
+    <div class="baris" style="margin-top:12px">${saya ? `<span class="foto-profil-wrap" onclick="pilihFoto('profil')" title="Ketuk untuk ganti foto profil">${avatarHtml(p, "besar")}<span class="lencana-kamera">📷</span></span>` : avatarHtml(p, "besar")}
       <div style="flex:1;min-width:0">
         <h2 style="margin-bottom:2px">${esc(p.display_name)}</h2>
         <div class="muted">@${esc(p.username)} · Bergabung ${p.created_at ? tglIndo(p.created_at) : "-"}</div>
@@ -982,6 +996,7 @@ async function renderProfil(t, userId){
       <div class="field"><label>Nama tampilan</label><input id="editNama" value="${esc(p.display_name)}"></div>
       <div class="field"><label>Bio</label><textarea id="editBio">${esc(p.bio || "")}</textarea></div>
       <div class="field"><label>Tanggal lahir</label><input id="editTgl" type="date" value="${p.birthdate || ""}"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"><button type="button" class="tombol kecil abu" onclick="pilihFoto('profil')">📷 Ganti Foto Profil</button><button type="button" class="tombol kecil abu" onclick="pilihFoto('sampul')">🖼️ Ganti Foto Sampul</button></div>
       <button class="tombol kecil" onclick="simpanProfilUI()">Simpan</button>
     </div>
   </div>
@@ -1024,6 +1039,52 @@ async function simpanProfilUI(){
     me.display_name = nama; me.bio = bio; me.birthdate = tgl;
   }
   $("namaTop").textContent = me.display_name; renderPanelProfil(); tampil("profil");
+}
+/* ---------- Foto profil & sampul ---------- */
+function kompresFoto(file, lebarMaks, tinggiMaks){
+  return new Promise((res, rej) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      try {
+        let w = img.naturalWidth, h = img.naturalHeight;
+        const skala = Math.min(1, lebarMaks / w, tinggiMaks / h);
+        w = Math.max(1, Math.round(w * skala)); h = Math.max(1, Math.round(h * skala));
+        const c = document.createElement("canvas"); c.width = w; c.height = h;
+        c.getContext("2d").drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(url);
+        res(c.toDataURL("image/jpeg", 0.8));
+      } catch(e){ URL.revokeObjectURL(url); rej(e); }
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error("Gambar tidak bisa dibaca.")); };
+    img.src = url;
+  });
+}
+function pilihFoto(jenis){ const el = $(jenis === "sampul" ? "inFotoSampul" : "inFotoProfil"); if (el) el.click(); }
+async function fotoDipilih(input, jenis){
+  const f = input.files && input.files[0];
+  input.value = "";
+  if (!f) return;
+  if (!f.type || !f.type.startsWith("image/")) { alert("Pilih file gambar (JPG/PNG)."); return; }
+  try {
+    const dataUrl = await kompresFoto(f, jenis === "sampul" ? 800 : 256, jenis === "sampul" ? 300 : 256);
+    const ok = await simpanFoto(jenis, dataUrl);
+    if (ok) alert(jenis === "sampul" ? "Foto sampul diganti." : "Foto profil diganti.");
+  } catch(e){ alert("Gagal memproses foto: " + (e.message || e)); }
+}
+async function simpanFoto(jenis, dataUrl){
+  const kolom = jenis === "sampul" ? "cover_url" : "avatar_url";
+  if (mode === "local") {
+    const d = dbLokal(); const u = d.users.find((x) => x.id === me.id);
+    if (u) { u[kolom] = dataUrl; simpanLokal(d); me = profilLokal(u); }
+  } else {
+    const { error } = await sb.from("humba_profiles").update({ [kolom]: dataUrl }).eq("id", me.id);
+    if (error) { alert("Gagal menyimpan foto: " + error.message + "\n\nJalankan supabase/migrasi-foto-profil.sql di SQL Editor Supabase dulu, lalu coba lagi."); return false; }
+    me[kolom] = dataUrl;
+  }
+  renderPanelProfil();
+  if (view === "profil" || view === "saya") tampil(view);
+  return true;
 }
 async function bagikanWall(wallId){
   const err = await kirimStatus($("inWall").value, wallId);
@@ -1442,11 +1503,12 @@ async function renderSaya(t){
     disimpan: "Kamu belum menyimpan catatan apa pun."
   }[tabSaya];
   let html = `<div class="kartu">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+    <div class="sampul ${me.cover_url ? "" : "kosong"}" ${me.cover_url ? `style="background-image:url('${esc(me.cover_url)}')"` : ""} onclick="pilihFoto('sampul')">${me.cover_url ? `<button class="ganti-sampul" onclick="event.stopPropagation();pilihFoto('sampul')">📷 Ganti Sampul</button>` : `<span>📷 Ketuk untuk pasang foto sampul</span>`}</div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-top:12px">
       <button class="tombol kecil abu" onclick="bukaDrawer(event)">☰ Menu</button>
       <button class="tombol kecil" onclick="tampil('profil')">Edit Profil</button>
     </div>
-    <div style="text-align:center;margin-top:6px">${avatarHtml(me, "besar")}
+    <div style="text-align:center;margin-top:6px"><span class="foto-profil-wrap" onclick="pilihFoto('profil')" title="Ketuk untuk ganti foto profil">${avatarHtml(me, "besar")}<span class="lencana-kamera">📷</span></span>
       <h2 style="margin-top:8px">${esc(me.display_name)}</h2>
       <div class="muted">@${esc(me.username)} · Indonesia</div>
       <div class="stat-baris" style="justify-content:center"><div><b>${st.diterima.length}</b>Mengikuti</div><div><b>${st.diterima.length}</b>Pengikut</div><div><b>${st.sukaDiterima}</b>Suka &amp; Simpan</div></div>
