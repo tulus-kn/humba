@@ -3,122 +3,176 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HUMBA</title>
+<title>HUMBA — jejaring sosial Sumba</title>
+<meta name="theme-color" content="#ff2442">
 <style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,Helvetica,sans-serif}
-body{background:#fdf6ec;color:#222}
-a{color:#d35400;text-decoration:none}
-a:hover{text-decoration:underline}
-button{cursor:pointer}
-input,textarea,select{font-size:14px}
-/* ===== Header ===== */
-.topbar{background:#d35400;color:#fff;padding:8px 12px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:20;box-shadow:0 2px 6px rgba(0,0,0,.25)}
-.logo{display:flex;align-items:center;gap:8px;cursor:pointer;flex:none}
-.logo svg{width:34px;height:34px;flex:none}
-.logo-nama{line-height:1.05}
-.logo-nama b{font-size:20px;letter-spacing:.5px}
-.logo-nama small{display:block;font-size:11px;opacity:.9;font-style:italic}
-.topbar .cari{flex:1;max-width:340px;display:flex;gap:6px}
-.topbar .cari input{flex:1;padding:7px 10px;border:0;border-radius:4px;outline:none}
-.topbar .cari button{background:#a04000;color:#fff;border:0;border-radius:4px;padding:0 12px;font-weight:bold}
-.topbar .kanan{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:13px;white-space:nowrap}
-.topbar .kanan .nama{font-weight:bold}
-.badge{background:#fff;color:#d35400;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:bold}
-/* ===== Layout 3 kolom ===== */
-.layout{max-width:1080px;margin:0 auto;display:flex;gap:14px;padding:14px 10px;align-items:flex-start}
-.kolom-kiri{width:190px;flex:none;position:sticky;top:64px}
-.kolom-kanan{width:250px;flex:none;position:sticky;top:64px}
-.kolom-tengah{flex:1;min-width:0}
-@media(max-width:900px){.kolom-kanan{display:none}}
-@media(max-width:680px){.layout{flex-direction:column}.kolom-kiri{width:100%;position:static}.kolom-kiri .nav{display:flex;flex-wrap:wrap;gap:4px}.kolom-kiri .nav button{flex:1}}
-/* ===== Panel & kartu ===== */
-.panel{background:#fff;border:1px solid #e8d9c0;border-radius:6px;margin-bottom:12px;overflow:hidden}
-.panel h3{background:#fdebd0;color:#7e5109;font-size:13px;padding:8px 12px;border-bottom:1px solid #f5d7a1}
-.panel .isi{padding:10px 12px;font-size:13px;line-height:1.5}
-.nav button{display:block;width:100%;text-align:left;background:none;border:0;padding:9px 12px;font-size:14px;color:#333;border-left:3px solid transparent}
-.nav button:hover{background:#fdf0d5}
-.nav button.aktif{background:#fdebd0;border-left-color:#d35400;font-weight:bold;color:#d35400}
-.nav button .jml{float:right;background:#d35400;color:#fff;border-radius:10px;padding:0 7px;font-size:11px}
-.kartu{background:#fff;border:1px solid #e8d9c0;border-radius:6px;padding:12px;margin-bottom:12px}
-.kartu h2{font-size:17px;margin-bottom:8px;color:#7e5109}
-.kartu h4{font-size:14px;margin:10px 0 6px;color:#7e5109}
-.muted{color:#888;font-size:12px}
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --merah:#ff2442;--merah-tua:#e51e3b;
+  --teks:#171719;--sub:#7d7d85;--sub2:#aeaeb6;
+  --bg:#f7f7f9;--garis:#efeff2;--kartu:#ffffff;
+}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",Roboto,Arial,sans-serif;
+  background:var(--bg);color:var(--teks);font-size:15px;line-height:1.55;
+  -webkit-font-smoothing:antialiased;min-height:100vh;
+}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+input,textarea,select{font-family:inherit;font-size:15px;color:inherit}
+
+/* ================= Bingkai aplikasi ================= */
+.bingkai{max-width:560px;margin:0 auto;min-height:100vh;background:var(--bg);position:relative}
+.atas{position:sticky;top:0;z-index:40;background:#fff;box-shadow:0 1px 0 var(--garis)}
+.topbar{display:flex;align-items:center;gap:9px;padding:9px 13px 8px}
+.logo{display:flex;align-items:center;gap:7px;flex:none;background:none;border:0;padding:0}
+.logo svg{width:29px;height:29px;display:block}
+.logo b{font-size:17px;letter-spacing:.4px;font-weight:800;color:var(--teks)}
+.cari{flex:1;min-width:0;display:flex;align-items:center;height:34px;background:#f4f4f7;border-radius:999px;padding:0 3px 0 10px}
+.cari svg{width:15px;height:15px;flex:none;color:#a5a5ad}
+.cari input{flex:1;min-width:0;border:0;background:none;outline:none;font-size:13px;padding:0 7px}
+.cari button{border:0;background:none;color:var(--merah);font-weight:700;font-size:13px;padding:0 9px;height:100%}
+.kanan{flex:none;display:flex;align-items:center;gap:4px}
+#pesanTop,#pokeTop,#namaTop{display:none}
+.keluar{color:var(--sub);font-size:12px;padding:6px 2px 6px 6px}
+.tabs{display:flex;align-items:center;justify-content:center;gap:2px;padding:2px 10px 7px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{position:relative;border:0;background:none;color:var(--sub);font-size:14px;font-weight:500;padding:6px 15px;border-radius:999px;white-space:nowrap}
+.tabs button.aktif{color:var(--merah);font-weight:700}
+.tabs button.aktif::after{content:"";position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:16px;height:3px;border-radius:2px;background:var(--merah)}
+
+/* ================= Konten ================= */
+.konten{padding:10px 12px 12px}
+.sekitar{max-width:560px;margin:0 auto;padding:0 12px calc(88px + env(safe-area-inset-bottom))}
+.sekitar summary{list-style:none;display:flex;align-items:center;gap:7px;padding:12px 4px 10px;font-size:13px;font-weight:600;color:var(--sub);cursor:pointer}
+.sekitar summary::-webkit-details-marker{display:none}
+.sekitar summary small{font-weight:400;color:var(--sub2);font-size:11.5px}
+.sekitar[open] summary{color:var(--merah)}
+.sekitar-isi{padding-top:2px}
+
+/* ================= Kartu ================= */
+.kartu{background:var(--kartu);border-radius:16px;padding:14px;margin-bottom:10px;box-shadow:0 1px 2px rgba(23,23,25,.045)}
+.kartu h2{font-size:17px;font-weight:800;letter-spacing:.2px;margin-bottom:10px}
+.kartu h4{font-size:13px;font-weight:700;margin:14px 0 6px}
+.panel{background:var(--kartu);border-radius:16px;margin-bottom:10px;box-shadow:0 1px 2px rgba(23,23,25,.045)}
+.panel h3{font-size:13px;font-weight:700;padding:13px 14px 4px}
+.panel .isi{padding:0 14px 13px;font-size:13px;line-height:1.6}
+.muted{color:var(--sub);font-size:12px}
 .kecil{font-size:12px}
-/* ===== Avatar & nama ===== */
-.avatar{width:44px;height:44px;border-radius:6px;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:bold;font-size:18px;flex:none}
-.avatar.kecil{width:32px;height:32px;font-size:14px;border-radius:5px}
-.avatar.besar{width:72px;height:72px;font-size:30px;border-radius:8px}
+.tengah{text-align:center}
+.link-kecil{font-size:12.5px;color:var(--merah);font-weight:600}
+
+/* ================= Avatar & nama ================= */
+.avatar{width:42px;height:42px;border-radius:50%;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;flex:none;letter-spacing:.3px}
+.avatar.kecil{width:30px;height:30px;font-size:13px}
+.avatar svg{width:58%;height:58%}
+.avatar.besar{width:78px;height:78px;font-size:31px;box-shadow:0 0 0 3px #fff,0 0 0 4px #ffe2e6}
 .baris{display:flex;gap:10px;align-items:flex-start}
 .baris-tengah{display:flex;gap:10px;align-items:center}
-.nama{font-weight:bold;color:#d35400}
-/* ===== Komposer & status ===== */
-.komposer textarea{width:100%;min-height:64px;padding:10px;border:1px solid #e0cba8;border-radius:6px;resize:vertical;outline:none}
-.komposer textarea:focus{border-color:#e67e22}
-.tombol{background:#d35400;color:#fff;border:0;border-radius:5px;padding:8px 16px;font-weight:bold;font-size:14px}
-.tombol:hover{background:#ba4a00}
-.tombol.abu{background:#888}
-.tombol.abu:hover{background:#777}
-.tombol.hijau{background:#27ae60}
-.tombol.hijau:hover{background:#219150}
-.tombol.kecil{padding:5px 10px;font-size:12px}
-.tombol:disabled{opacity:.5;cursor:default}
-.status{border-bottom:1px solid #f0e2c8;padding:12px 0}
-.status:last-child{border-bottom:0}
-.status .teks{font-size:14px;line-height:1.5;margin:6px 0;white-space:pre-wrap;word-break:break-word}
-.aksi{font-size:12px;color:#888;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-.aksi button{background:none;border:0;color:#d35400;font-size:12px;padding:0}
-.aksi button:hover{text-decoration:underline}
-.aksi button.suka-aktif{font-weight:bold}
-.komentar{background:#fdf6ec;border-radius:6px;padding:8px 10px;margin:8px 0 0 0;font-size:13px}
-.komentar .teks{margin-top:2px;white-space:pre-wrap;word-break:break-word}
-.komen-form{display:flex;gap:6px;margin-top:8px}
-.komen-form input{flex:1;padding:7px 9px;border:1px solid #e0cba8;border-radius:5px;outline:none}
-.komen-form button{background:#e67e22;color:#fff;border:0;border-radius:5px;padding:0 12px;font-weight:bold}
-/* ===== Daftar teman / pengguna ===== */
-.item-pengguna{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #f0e2c8}
+.nama{font-weight:700;color:var(--teks)}
+
+/* ================= Komposer ================= */
+.komposer textarea{width:100%;min-height:70px;padding:12px;border:0;background:#f6f6f9;border-radius:12px;resize:vertical;outline:none;font-size:15px;line-height:1.55}
+.komposer textarea:focus{background:#f1f1f5}
+.kaki-komposer{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}
+
+/* ================= Tombol ================= */
+.tombol{background:var(--merah);color:#fff;border:0;border-radius:999px;padding:9px 18px;font-weight:700;font-size:14px;transition:background .15s}
+.tombol:hover{background:var(--merah-tua)}
+.tombol.abu{background:#f1f1f4;color:#66666e}
+.tombol.abu:hover{background:#e7e7ec}
+.tombol.hijau{background:#fff;color:var(--merah);border:1px solid var(--merah)}
+.tombol.hijau:hover{background:#fff1f3}
+.tombol.kecil{padding:6px 13px;font-size:12px;border-radius:999px}
+.tombol:disabled{opacity:.45;cursor:default}
+
+/* ================= Feed status ================= */
+.kartu.feed{padding:14px 14px 10px}
+.feed-kepala{display:flex;align-items:center;gap:10px}
+.feed-kepala .info{flex:1;min-width:0;line-height:1.35}
+.feed-kepala .sub{font-size:11.5px;color:var(--sub);margin-top:2px;display:flex;align-items:center;gap:6px}
+.tag-teman{background:#fff1f3;color:var(--merah);font-size:10.5px;font-weight:700;border-radius:5px;padding:1px 5px}
+.status{padding:0}
+.status .teks{font-size:15.5px;line-height:1.62;margin:9px 0 2px;white-space:pre-wrap;word-break:break-word;color:#232326}
+.aksi{display:flex;align-items:center;gap:16px;margin-top:11px;padding-top:8px;border-top:1px solid var(--garis)}
+.aksi button{display:inline-flex;align-items:center;gap:5px;background:none;border:0;color:var(--sub);font-size:12.5px;padding:3px 0;font-weight:500}
+.aksi button svg{width:17px;height:17px;flex:none}
+.aksi button.suka-aktif{color:var(--merah);font-weight:700}
+.komentar{background:#f7f7fa;border-radius:11px;padding:8px 11px;margin-top:7px;font-size:13px}
+.komentar b{font-size:12.5px;font-weight:700}
+.komentar .teks{margin-top:2px;white-space:pre-wrap;word-break:break-word;font-size:13px}
+.komen-form{display:flex;align-items:center;gap:8px;margin-top:9px}
+.komen-form input{flex:1;min-width:0;padding:8px 13px;border:0;background:#f4f4f7;border-radius:999px;outline:none;font-size:13px}
+.komen-form button{background:none;border:0;color:var(--merah);font-weight:700;font-size:13px;padding:2px 4px;flex:none}
+
+/* ================= Daftar orang ================= */
+.item-pengguna{display:flex;gap:11px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--garis)}
+.item-pengguna .avatar{margin-top:2px}
 .item-pengguna:last-child{border-bottom:0}
 .item-pengguna .info{flex:1;min-width:0}
-.item-pengguna .info .sub{font-size:12px;color:#888;margin-top:2px;white-space:pre-wrap;word-break:break-word}
-.dot{width:10px;height:10px;border-radius:50%;display:inline-block;vertical-align:middle}
-.dot.on{background:#27ae60;animation:denyut 1.2s infinite ease-out}
-.dot.off{background:#bbb}
-@keyframes denyut{0%{transform:scale(.8);opacity:1}75%{transform:scale(1.5);opacity:0}100%{transform:scale(.8);opacity:0}}
-/* ===== Chat ===== */
-.chat-wrap{display:flex;flex-direction:column;height:480px}
-.chat-area{flex:1;overflow-y:auto;padding:10px;background:#fdf6ec;border:1px solid #f0e2c8;border-radius:6px;margin-bottom:8px}
-.gelembung{max-width:78%;padding:8px 11px;border-radius:10px;font-size:14px;line-height:1.4;margin:6px 0;white-space:pre-wrap;word-break:break-word}
-.gelembung.kirim{background:#fdebd0;margin-left:auto;border-bottom-right-radius:3px}
-.gelembung.terima{background:#fff;border:1px solid #e8d9c0;margin-right:auto;border-bottom-left-radius:3px}
-.gelembung .waktu{font-size:11px;color:#999;text-align:right;margin-top:3px}
-.chat-input{display:flex;gap:8px}
-.chat-input input{flex:1;padding:10px;border:1px solid #e0cba8;border-radius:6px;outline:none}
-.poke-banner{background:#d35400;color:#fff;padding:10px 14px;border-radius:6px;font-weight:bold;margin-bottom:10px;animation:kedip 1s infinite}
-@keyframes kedip{50%{opacity:.6}}
-/* ===== Auth ===== */
-.auth-wrap{max-width:430px;margin:40px auto;padding:0 12px}
-.auth-kartu{background:#fff;border:1px solid #e8d9c0;border-radius:8px;padding:22px;box-shadow:0 4px 18px rgba(0,0,0,.12)}
-.auth-logo{text-align:center;margin-bottom:14px}
-.auth-logo svg{width:84px;height:84px}
-.auth-logo h1{font-size:26px;color:#d35400;margin-top:6px}
-.auth-logo p{color:#888;font-size:13px;font-style:italic}
-.field{margin-bottom:12px}
-.field label{display:block;font-size:13px;color:#666;margin-bottom:4px}
-.field input,.field textarea,.field select{width:100%;padding:11px;border:1px solid #ddd;border-radius:6px;outline:none;background:#fff}
-.field input:focus,.field textarea:focus{border-color:#e67e22}
-.field textarea{min-height:80px;resize:vertical}
-.tombol-penuh{width:100%;padding:12px;font-size:15px;margin-top:4px}
-.pesan-info{font-size:13px;padding:10px 12px;border-radius:6px;margin-bottom:12px;line-height:1.5}
-.pesan-info.kuning{background:#fef9e7;border:1px solid #f9e79f;color:#7d6608}
-.pesan-info.merah{background:#fdedec;border:1px solid #f5b7b1;color:#922b21}
-.pesan-info.hijau{background:#eafaf1;border:1px solid #a9dfbf;color:#1e8449}
-.tengah{text-align:center}
-.link-kecil{font-size:13px}
-/* ===== Grup & catatan ===== */
-.chip{display:inline-block;background:#fdebd0;color:#7e5109;border-radius:12px;padding:2px 10px;font-size:12px;margin:2px 4px 2px 0}
+.item-pengguna .info .sub{font-size:12px;color:var(--sub);margin-top:2px;white-space:pre-wrap;word-break:break-word}
 .daftar-grup{cursor:pointer}
-.daftar-grup:hover{background:#fdf6ec}
-textarea.editor-catatan{width:100%;min-height:220px;padding:12px;border:1px solid #e0cba8;border-radius:6px;resize:vertical;outline:none;line-height:1.6}
-.judul-catatan{font-size:15px;font-weight:bold}
+.daftar-grup:hover{background:#fbfbfd}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;vertical-align:middle}
+.dot.on{background:#1fd18a;animation:denyut 1.4s infinite ease-out}
+.dot.off{background:#c9c9d0}
+@keyframes denyut{0%{transform:scale(.85);opacity:1}75%{transform:scale(1.55);opacity:0}100%{transform:scale(.85);opacity:0}}
+
+/* ================= Chat ================= */
+.chat-wrap{display:flex;flex-direction:column;height:min(62vh,520px)}
+.chat-area{flex:1;overflow-y:auto;padding:12px;background:#f7f7fa;border-radius:14px;margin-bottom:9px}
+.gelembung{max-width:78%;padding:9px 12px;border-radius:14px;font-size:14px;line-height:1.45;margin:6px 0;white-space:pre-wrap;word-break:break-word;box-shadow:0 1px 1px rgba(0,0,0,.03)}
+.gelembung.kirim{background:var(--merah);color:#fff;margin-left:auto;border-bottom-right-radius:5px}
+.gelembung.terima{background:#fff;color:var(--teks);margin-right:auto;border-bottom-left-radius:5px}
+.gelembung .waktu{font-size:10.5px;color:rgba(255,255,255,.72);text-align:right;margin-top:3px}
+.gelembung.terima .waktu{color:#a8a8b0}
+.chat-input{display:flex;align-items:center;gap:8px}
+.chat-input input{flex:1;min-width:0;padding:10px 14px;border:0;background:#f4f4f7;border-radius:999px;outline:none;font-size:14px}
+.poke-banner{background:var(--merah);color:#fff;padding:10px 14px;border-radius:14px;font-weight:700;margin-bottom:10px;animation:kedip 1s infinite}
+@keyframes kedip{50%{opacity:.6}}
+
+/* ================= Auth ================= */
+.auth-wrap{min-height:100vh;max-width:440px;margin:0 auto;padding:30px 18px 42px;display:flex;flex-direction:column;justify-content:center}
+.auth-kartu{background:#fff;border-radius:22px;padding:26px 22px 22px;box-shadow:0 10px 40px rgba(255,36,66,.09),0 2px 8px rgba(0,0,0,.04)}
+.auth-logo{text-align:center;margin-bottom:20px}
+.auth-logo svg{width:62px;height:62px}
+.auth-logo h1{font-size:27px;font-weight:800;letter-spacing:1.2px;margin-top:10px;color:var(--teks)}
+.auth-logo p{color:var(--sub);font-size:12.5px;margin-top:5px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:12px;color:var(--sub);font-weight:600;margin-bottom:6px}
+.field input,.field textarea,.field select{width:100%;padding:12px 14px;border:1px solid transparent;background:#f5f5f8;border-radius:12px;outline:none;color:var(--teks)}
+.field input:focus,.field textarea:focus,.field select:focus{background:#fff;border-color:var(--merah)}
+.field textarea{min-height:80px;resize:vertical}
+.tombol-penuh{width:100%;padding:13px;font-size:15px;margin-top:6px}
+.pesan-info{font-size:12.5px;padding:10px 12px;border-radius:12px;margin-bottom:14px;line-height:1.55}
+.pesan-info.kuning{background:#fff7e6;color:#8a5a00}
+.pesan-info.merah{background:#ffeff1;color:#bf1636}
+.pesan-info.hijau{background:#edfbf2;color:#11813f}
+details.supabase{margin-top:16px;font-size:12px;color:var(--sub)}
+details.supabase summary{cursor:pointer;font-weight:600}
+details.supabase[open]{color:var(--teks)}
+details.supabase p{margin-top:8px;line-height:1.55;color:var(--sub)}
+details.supabase input{width:100%;padding:10px 12px;border:1px solid #ececf0;border-radius:10px;margin-top:6px;outline:none;font-size:12.5px}
+
+/* ================= Lain-lain ================= */
+.chip{display:inline-block;background:#fff1f3;color:var(--merah);border-radius:999px;padding:3px 10px;font-size:11.5px;font-weight:700;margin:2px 6px 2px 0}
+textarea.editor-catatan{width:100%;min-height:210px;padding:13px;border:0;background:#f6f6f9;border-radius:12px;resize:vertical;outline:none;line-height:1.7}
+textarea.editor-catatan:focus{background:#f1f1f5}
+.judul-catatan{font-size:15px;font-weight:700;margin-bottom:2px}
+.stat-baris{display:flex;gap:18px;margin-top:12px;font-size:12.5px;color:var(--sub)}
+.stat-baris b{color:var(--teks);font-size:15px;font-weight:800;margin-right:4px}
+input[type=checkbox]{accent-color:var(--merah);width:16px;height:16px;vertical-align:-3px}
+
+/* ================= Bottom nav ================= */
+#navKiri{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:560px;z-index:50;display:flex;align-items:center;justify-content:space-around;gap:2px;background:#fff;border-top:1px solid var(--garis);padding:6px 6px calc(6px + env(safe-area-inset-bottom));box-shadow:0 -4px 18px rgba(0,0,0,.04)}
+#navKiri button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:none;border:0;color:#5a5a63;font-size:11px;font-weight:500;padding:3px 8px;min-width:54px;min-height:44px;border-radius:10px}
+#navKiri button svg{width:23px;height:23px;display:block}
+#navKiri button.aktif{color:var(--merah);font-weight:700}
+#navKiri button.buat{flex:none;width:48px;min-width:48px;height:30px;min-height:30px;padding:0;background:var(--merah);border-radius:999px;color:#fff;box-shadow:0 4px 12px rgba(255,36,66,.28)}
+#navKiri button.buat svg{width:19px;height:19px;color:#fff}
+#navKiri button.buat:hover{background:var(--merah-tua)}
+#navKiri .jml{position:absolute;top:0;right:6px;background:var(--merah);color:#fff;border-radius:999px;min-width:16px;height:16px;line-height:16px;text-align:center;font-size:10px;font-weight:700;padding:0 4px;float:none}
 </style>
 </head>
 <body>
@@ -128,7 +182,7 @@ textarea.editor-catatan{width:100%;min-height:220px;padding:12px;border:1px soli
   <div class="auth-wrap">
     <div class="auth-kartu">
       <div class="auth-logo">
-        <svg viewBox="0 0 100 100" aria-label="Logo HUMBA"><rect x="10" y="14" width="80" height="72" rx="8" fill="#d35400"/><rect x="18" y="22" width="64" height="56" rx="4" fill="#fdf6ec"/><path d="M50 22 V78" stroke="#e67e22" stroke-width="2"/><g stroke="#b9770e" stroke-width="2" stroke-linecap="round"><path d="M24 32 H44"/><path d="M24 42 H44"/><path d="M24 52 H44"/><path d="M56 32 H76"/><path d="M56 42 H76"/><path d="M56 52 H76"/></g><rect x="66" y="58" width="26" height="7" rx="3.5" fill="#2e86c1" transform="rotate(-32 79 61)"/><path d="M64 70 L60 78 L70 74 Z" fill="#1a5276" transform="rotate(-32 65 74)"/></svg>
+        <svg viewBox="0 0 48 48" aria-label="Logo HUMBA"><rect width="48" height="48" rx="12" fill="#ff2442"/><rect x="10" y="9" width="28" height="30" rx="4" fill="#fff"/><path d="M24 9v30" stroke="#ffc9d2" stroke-width="2"/><g stroke="#ff8fa1" stroke-width="2" stroke-linecap="round"><path d="M14 16h6"/><path d="M14 23h6"/><path d="M14 30h6"/><path d="M28 16h6"/><path d="M28 23h6"/><path d="M28 30h6"/></g></svg>
         <h1>HUMBA</h1>
         <p>Medsos khusus Sumba — kembali ke masa sederhana</p>
       </div>
@@ -138,16 +192,16 @@ textarea.editor-catatan{width:100%;min-height:220px;padding:12px;border:1px soli
       <div class="field"><label>Password (min. 4 karakter)</label><input id="inPass" type="password" placeholder="••••" autocomplete="current-password"></div>
       <div class="field" id="fieldTgl" style="display:none"><label>Tanggal lahir (untuk pengingat ulang tahun)</label><input id="inTgl" type="date"></div>
       <button class="tombol tombol-penuh" id="btnMasuk" onclick="masuk()">Masuk</button>
-      <button class="tombol tombol-penuh hijau" id="btnDaftar" onclick="daftar()">Daftar Akun Baru</button>
-      <p class="tengah kecil" style="margin-top:10px"><a href="#" onclick="toggleModeDaftar(event)">Daftar hanya pakai username, nama, dan password. Tanpa email, tanpa nomor HP.</a></p>
+      <button class="tombol tombol-penuh hijau" id="btnDaftar" style="display:none" onclick="daftar()">Daftar Akun Baru</button>
+      <p class="tengah kecil" style="margin-top:12px"><a href="#" class="link-kecil" onclick="toggleModeDaftar(event)">Daftar hanya pakai username, nama, dan password. Tanpa email, tanpa nomor HP.</a></p>
       <div id="authMode" style="display:none;margin-top:12px"></div>
-      <details style="margin-top:14px;font-size:12px;color:#888">
+      <details class="supabase">
         <summary>Pengaturan Supabase (untuk sinkron antar HP)</summary>
-        <p style="margin-top:6px;line-height:1.5">Supabase URL sudah diisi dan kunci anon sudah ditanam di aplikasi, jadi kamu tidak perlu mengisi apa-apa. Kalau mau mengganti kunci, tempel anon public key dari dashboard Supabase kamu (Settings → API) di bawah ini. Kunci yang ditempel tersimpan hanya di HP ini dan menggantikan kunci bawaan.</p>
-        <input id="inKunci" placeholder="eyJhbGciOi… (anon key)" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:6px;margin-top:6px">
-        <button class="tombol abu tombol-penuh" style="margin-top:6px" onclick="simpanKunci()">Simpan Kunci</button>
-        <p style="margin-top:8px;line-height:1.5">Belum ada tabel di Supabase? Jalankan file <b>supabase/schema.sql</b> dari repo ini di SQL Editor, dan pastikan Confirm email di Authentication → Settings sudah mati. Kalau tidak diisi, aplikasi jalan dalam Mode Lokal (demo, hanya di HP ini).</p>
-        <button class="tombol tombol-penuh" style="background:#b45309;margin-top:6px" onclick="cobaModeLokal()">Coba Mode Lokal (demo)</button>
+        <p>Supabase URL sudah diisi dan kunci anon sudah ditanam di aplikasi, jadi kamu tidak perlu mengisi apa-apa. Kalau mau mengganti kunci, tempel anon public key dari dashboard Supabase kamu (Settings → API) di bawah ini. Kunci yang ditempel tersimpan hanya di HP ini dan menggantikan kunci bawaan.</p>
+        <input id="inKunci" placeholder="eyJhbGciOi… (anon key)">
+        <button class="tombol abu tombol-penuh" style="margin-top:8px" onclick="simpanKunci()">Simpan Kunci</button>
+        <p>Belum ada tabel di Supabase? Jalankan file <b>supabase/schema.sql</b> dari repo ini di SQL Editor, dan pastikan Confirm email di Authentication → Settings sudah mati. Kalau tidak diisi, aplikasi jalan dalam Mode Lokal (demo, hanya di HP ini).</p>
+        <button class="tombol tombol-penuh" style="margin-top:8px" onclick="cobaModeLokal()">Coba Mode Lokal (demo)</button>
       </details>
     </div>
   </div>
@@ -155,37 +209,67 @@ textarea.editor-catatan{width:100%;min-height:220px;padding:12px;border:1px soli
 
 <!-- ================= APLIKASI UTAMA ================= -->
 <div id="layarApp" style="display:none">
-  <div class="topbar">
-    <div class="logo" onclick="tampil('beranda')">
-      <svg viewBox="0 0 100 100" aria-label="Logo HUMBA"><rect x="10" y="14" width="80" height="72" rx="8" fill="#fff"/><rect x="18" y="22" width="64" height="56" rx="4" fill="#fdf6ec"/><path d="M50 22 V78" stroke="#e67e22" stroke-width="2"/><g stroke="#b9770e" stroke-width="2" stroke-linecap="round"><path d="M24 32 H44"/><path d="M24 42 H44"/><path d="M24 52 H44"/><path d="M56 32 H76"/><path d="M56 42 H76"/><path d="M56 52 H76"/></g><rect x="66" y="58" width="26" height="7" rx="3.5" fill="#2e86c1" transform="rotate(-32 79 61)"/><path d="M64 70 L60 78 L70 74 Z" fill="#1a5276" transform="rotate(-32 65 74)"/></svg>
-      <div class="logo-nama"><b>HUMBA</b></div>
-    </div>
-    <div class="cari"><input id="inCari" placeholder="Cari teman…" onkeydown="if(event.key==='Enter')cariTeman()"><button onclick="cariTeman()">Cari</button></div>
-    <div class="kanan">
-      <span id="pokeTop"></span>
-      <span id="pesanTop"></span>
-      <span class="nama" id="namaTop"></span>
-      <a href="#" style="color:#fff" onclick="keluar(event)">Keluar</a>
-    </div>
-  </div>
-  <div class="layout">
-    <div class="kolom-kiri">
-      <div class="panel nav" id="navKiri">
-        <button data-v="beranda" onclick="tampil('beranda')">🏠 Beranda</button>
-        <button data-v="profil" onclick="tampil('profil')">👤 Profil Saya</button>
-        <button data-v="pesan" onclick="tampil('pesan')">✉️ Pesan Masuk <span class="jml" id="jmlPesan" style="display:none"></span></button>
-        <button data-v="teman" onclick="tampil('teman')">👥 Teman <span class="jml" id="jmlTeman" style="display:none"></span></button>
-        <button data-v="grup" onclick="tampil('grup')">👨‍👩‍👧‍👦 Grup</button>
-        <button data-v="catatan" onclick="tampil('catatan')">📒 Catatan</button>
+  <div class="bingkai">
+    <div class="atas">
+      <div class="topbar">
+        <div class="logo" onclick="tampil('beranda')">
+          <svg viewBox="0 0 48 48" aria-label="Logo HUMBA"><rect width="48" height="48" rx="12" fill="#ff2442"/><rect x="10" y="9" width="28" height="30" rx="4" fill="#fff"/><path d="M24 9v30" stroke="#ffc9d2" stroke-width="2"/><g stroke="#ff8fa1" stroke-width="2" stroke-linecap="round"><path d="M14 16h6"/><path d="M14 23h6"/><path d="M14 30h6"/><path d="M28 16h6"/><path d="M28 23h6"/><path d="M28 30h6"/></g></svg>
+          <b>HUMBA</b>
+        </div>
+        <div class="cari">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>
+          <input id="inCari" placeholder="Cari teman…" onkeydown="if(event.key==='Enter')cariTeman()">
+          <button onclick="cariTeman()">Cari</button>
+        </div>
+        <div class="kanan">
+          <span id="pokeTop"></span>
+          <span id="pesanTop"></span>
+          <span class="nama" id="namaTop"></span>
+          <a class="keluar" href="#" onclick="keluar(event)">Keluar</a>
+        </div>
       </div>
-      <div class="panel"><h3>Profil Saya</h3><div class="isi" id="panelProfil"></div></div>
+      <div class="tabs" id="tabsAtas">
+        <button data-v="beranda" onclick="tampil('beranda')">Kabar</button>
+        <button data-v="grup" onclick="tampil('grup')">Grup</button>
+        <button data-v="catatan" onclick="tampil('catatan')">Catatan</button>
+      </div>
     </div>
-    <div class="kolom-tengah" id="tengah"></div>
-    <div class="kolom-kanan">
-      <div class="panel"><h3>🟢 Sedang Online</h3><div class="isi" id="panelOnline"><span class="muted">Memuat…</span></div></div>
-      <div class="panel"><h3>🎂 Ulang Tahun</h3><div class="isi" id="panelUltah"><span class="muted">Memuat…</span></div></div>
-      <div class="panel"><h3>👆 Poke</h3><div class="isi" id="panelPoke"><span class="muted">Tidak ada poke.</span></div></div>
-    </div>
+
+    <main class="konten" id="tengah"></main>
+
+    <details class="sekitar">
+      <summary>Sekitarmu <small>online · ulang tahun · poke</small></summary>
+      <div class="sekitar-isi">
+        <div class="panel"><h3>Profil Saya</h3><div class="isi" id="panelProfil"></div></div>
+        <div class="panel"><h3>Sedang Online</h3><div class="isi" id="panelOnline"><span class="muted">Memuat…</span></div></div>
+        <div class="panel"><h3>Ulang Tahun</h3><div class="isi" id="panelUltah"><span class="muted">Memuat…</span></div></div>
+        <div class="panel"><h3>Poke</h3><div class="isi" id="panelPoke"><span class="muted">Tidak ada poke.</span></div></div>
+      </div>
+    </details>
+
+    <nav id="navKiri">
+      <button data-v="beranda" onclick="tampil('beranda')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.6 12 3.2l9 7.4"/><path d="M5 9.6V21h14V9.6"/><path d="M9.5 21v-6.2h5v6.2"/></svg>
+        <span>Kabar</span>
+      </button>
+      <button data-v="teman" onclick="tampil('teman')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.3"/><path d="M3.2 20.4c0-3.4 2.6-5.7 5.8-5.7s5.8 2.3 5.8 5.7"/><circle cx="17.2" cy="9" r="2.4"/><path d="M15 20.4c.2-2.8 1.9-4.5 4.2-4.5"/></svg>
+        <span>Teman</span>
+        <span class="jml" id="jmlTeman" style="display:none"></span>
+      </button>
+      <button class="buat" onclick="tulisCepat()" aria-label="Tulis status">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+      </button>
+      <button data-v="pesan" onclick="tampil('pesan')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 11.8c0 3.8-3.8 6.9-8.5 6.9-1 0-2-.1-2.9-.4L4.5 20l1.2-3.3A6.6 6.6 0 0 1 3.5 11.8c0-3.8 3.8-6.9 8.5-6.9s8.5 3.1 8.5 6.9Z"/></svg>
+        <span>Pesan</span>
+        <span class="jml" id="jmlPesan" style="display:none"></span>
+      </button>
+      <button data-v="profil" onclick="profilLihat=me.id;tampil('profil')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.6 20.5c0-4 3.4-6.7 7.4-6.7s7.4 2.7 7.4 6.7"/></svg>
+        <span>Profil</span>
+      </button>
+    </nav>
   </div>
 </div>
 
@@ -201,8 +285,14 @@ textarea.editor-catatan{width:100%;min-height:220px;padding:12px;border:1px soli
 /* ---------- Bantuan ---------- */
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const WARNA_AVATAR = ["#d35400","#e67e22","#27ae60","#2980b9","#8e44ad","#c0392b","#16a085","#7d3c98"];
+const WARNA_AVATAR = ["#ff5a72","#ff8a4c","#3ec08a","#4a90e2","#8e6ce8","#e2596e","#2bb3a3","#7a8aa0"];
 const warnaAvatar = (nama) => { let h = 0; for (const c of String(nama)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return WARNA_AVATAR[h % WARNA_AVATAR.length]; };
+const IKON = (d, aktif) => `<svg viewBox="0 0 24 24" fill="${aktif ? "currentColor" : "none"}" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const ikonSuka = (aktif) => IKON(`<path d="M12 20.3S4.6 15.8 4.6 10.9A4.1 4.1 0 0 1 12 8.2a4.1 4.1 0 0 1 7.4 2.7c0 4.9-7.4 9.4-7.4 9.4Z"/>`, aktif);
+const ikonKomen = () => IKON(`<path d="M20 11.9c0 3.7-3.6 6.7-8 6.7-1 0-2-.1-2.9-.4L5 19.8l1.2-3.2A6.3 6.3 0 0 1 4 11.9c0-3.7 3.6-6.7 8-6.7s8 3 8 6.7Z"/>`);
+const ikonGrup = () => `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.2" r="3"/><path d="M3.6 20c0-3.1 2.4-5.2 5.4-5.2s5.4 2.1 5.4 5.2"/><circle cx="17.2" cy="9.2" r="2.2"/><path d="M15.3 20c.2-2.6 1.8-4.1 3.9-4.1"/></svg>`;
+const ikonCatatan = () => `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3.4" width="14" height="17.2" rx="2.2"/><path d="M8.6 8.4h6.8M8.6 12.5h6.8M8.6 16.6h4"/></svg>`;
+const ikonPoke = () => IKON(`<path d="M9 11.2V5.6a1.5 1.5 0 0 1 3 0v4.6"/><path d="M12 10.2V4.6a1.5 1.5 0 0 1 3 0v5.6"/><path d="M15 10.2V6.6a1.5 1.5 0 0 1 3 0v6.4c0 4-2.7 6.6-6 6.6-2 0-3.7-.8-4.8-2.4L4.9 13a1.4 1.4 0 0 1 2.2-1.7L9 13.4"/>`);
 const avatarHtml = (p, cls) => `<span class="avatar ${cls||""}" style="background:${p.avatar_color||warnaAvatar(p.display_name||p.username)}">${esc((p.display_name||p.username||"?")[0].toUpperCase())}</span>`;
 const tglIndo = (d) => { try { return new Date(d).toLocaleDateString("id-ID",{day:"numeric",month:"long",year:"numeric"}); } catch(e){ return String(d||""); } };
 const waktuRelatif = (iso) => { const s = Math.floor((Date.now()-new Date(iso).getTime())/1000); if (s < 60) return "baru saja"; if (s < 3600) return Math.floor(s/60)+" mnt lalu"; if (s < 86400) return Math.floor(s/3600)+" jam lalu"; const h = Math.floor(s/86400); if (h < 30) return h+" hari lalu"; return tglIndo(iso); };
@@ -219,7 +309,7 @@ function getAnonKey(){
   try { const l = localStorage.getItem("ch.anonkey"); if (l && l.trim()) return l.trim(); } catch(e){}
   return (typeof DEFAULT_ANON_KEY === "string" ? DEFAULT_ANON_KEY.trim() : "");
 }
-let sb = null, mode = "cloud", me = null, sesiLokal = null;
+let sb = null, mode = "cloud", me = null, sesiLokal = null, pilihanLokal = false;
 async function initSupabase(){
   try {
     let createClient = window.supabase && window.supabase.createClient;
@@ -240,7 +330,7 @@ function simpanKunci(){
   infoAuth(`<div class="pesan-info hijau">Kunci tersimpan di HP ini. Silakan daftar / masuk.</div>`);
 }
 async function cobaModeLokal(){
-  mode = "local"; sb = null;
+  pilihanLokal = true; mode = "local"; sb = null;
   infoAuth(`<div class="pesan-info kuning">Mode Lokal aktif (demo, hanya di HP ini). Daftar akun lokal di bawah.</div>`);
   tampilAuth();
 }
@@ -458,10 +548,10 @@ function masukAplikasi(){
   tampil("beranda");
 }
 function renderPanelProfil(){
-  $("panelProfil").innerHTML = `<div class="baris-tengah">${avatarHtml(me, "besar")}<div><div class="nama">${esc(me.display_name)}</div><div class="muted">@${esc(me.username)}</div><div class="kecil" style="margin-top:4px">${me.bio ? esc(me.bio) : "Belum ada bio."}</div>${me.birthdate ? `<div class="kecil">🎂 ${tglIndo(me.birthdate)}</div>` : ""}</div></div><div style="margin-top:8px"><span class="chip">${mode === "cloud" ? "☁️ Tersambung (Supabase)" : "💾 Mode Lokal (demo)"}</span></div>`;
+  $("panelProfil").innerHTML = `<div class="baris-tengah">${avatarHtml(me, "besar")}<div><div class="nama">${esc(me.display_name)}</div><div class="muted">@${esc(me.username)}</div><div class="kecil" style="margin-top:4px">${me.bio ? esc(me.bio) : "Belum ada bio."}</div>${me.birthdate ? `<div class="kecil">🎂 ${tglIndo(me.birthdate)}</div>` : ""}</div></div><div style="margin-top:8px"><span class="chip">${mode === "cloud" ? "Supabase · tersambung" : "Mode lokal (demo)"}</span></div>`;
 }
 function setNavAktif(v){
-  document.querySelectorAll("#navKiri button").forEach((b) => b.classList.toggle("aktif", b.dataset.v === v));
+  document.querySelectorAll("[data-v]").forEach((b) => b.classList.toggle("aktif", b.dataset.v === v));
 }
 async function tampil(v){
   view = v; setNavAktif(v);
@@ -544,6 +634,7 @@ function jarakUltah(birthdate, kini){
 }
 async function pokeDariPanel(id, nama){ await kirimPoke(id, nama); renderPanelKanan(); }
 async function lihatProfil(id){ profilLihat = id; tampil("profil"); }
+function tulisCepat(){ tampil("beranda").then(() => { const el = $("inStatus"); if (el) { el.focus(); el.scrollIntoView({ block: "center", behavior: "smooth" }); } }); }
 
 /* ---------- Beranda (Kabar Beranda) ---------- */
 async function renderBeranda(t){
@@ -553,10 +644,9 @@ async function renderBeranda(t){
   const temanIds = await temanDiterima();
   t.innerHTML = `
   <div class="kartu">
-    <h2>Kabar Beranda</h2>
     <div class="komposer">
-      <div class="baris" style="margin-bottom:8px">${avatarHtml(me)}<textarea id="inStatus" placeholder="Apa yang Anda pikirkan, ${esc(me.display_name)}?" maxlength="2000"></textarea></div>
-      <div style="text-align:right"><span class="muted" id="hitungStatus">0/2000</span> <button class="tombol" onclick="bagikanStatus()">Bagikan</button></div>
+      <div class="baris" style="margin-bottom:8px">${avatarHtml(me)}<textarea id="inStatus" placeholder="Bagikan sesuatu, ${esc(me.display_name)}…" maxlength="2000"></textarea></div>
+      <div class="kaki-komposer"><span class="muted">Terlihat oleh semua pengguna</span><div style="display:flex;align-items:center;gap:10px"><span class="muted" id="hitungStatus">0/2000</span><button class="tombol kecil" onclick="bagikanStatus()">Bagikan</button></div></div>
     </div>
   </div>
   <div id="daftarStatus">${postingan.length ? "" : `<div class="kartu tengah"><b>Belum ada status sama sekali.</b><br><span class="muted">Jadilah yang pertama menulis status di HUMBA!</span></div>`}</div>`;
@@ -567,21 +657,21 @@ async function renderBeranda(t){
     const sayaSuka = suka.some((s) => s.user_id === me.id);
     const komen = await ambilKomentar(p.id);
     const div = document.createElement("div");
-    div.className = "kartu";
+    div.className = "kartu feed";
     div.innerHTML = `
-      <div class="baris">
+      <div class="feed-kepala">
         ${avatarHtml(pemilik)}
-        <div style="flex:1;min-width:0">
+        <div class="info">
           <a href="#" class="nama" onclick="lihatProfil('${p.user_id}');return false">${esc(pemilik.display_name)}</a>
-          <div class="muted">${waktuRelatif(p.created_at)} · ${temanIds.includes(p.user_id) || p.user_id === me.id ? "Teman" : "Semua pengguna"}</div>
+          <div class="sub">${waktuRelatif(p.created_at)}${temanIds.includes(p.user_id) || p.user_id === me.id ? '<span class="tag-teman">Teman</span>' : ""}</div>
         </div>
         ${p.user_id === me.id ? `<button class="tombol kecil abu" onclick="hapusStatusUI('${p.id}')">Hapus</button>` : ""}
       </div>
       <div class="status"><div class="teks">${esc(p.body)}</div></div>
       <div class="aksi">
-        <button class="${sayaSuka ? "suka-aktif" : ""}" onclick="sukaUI('${p.id}')">👍 Suka (${suka.length})</button>
-        <button onclick="fokusKomen('${p.id}')">💬 Komentar (${komen.length})</button>
-        <button onclick="pokeDariPanel('${p.user_id}','${esc(pemilik.display_name)}')">👆 Poke</button>
+        <button class="${sayaSuka ? "suka-aktif" : ""}" onclick="sukaUI('${p.id}')">${ikonSuka(sayaSuka)}<span>Suka ${suka.length}</span></button>
+        <button onclick="fokusKomen('${p.id}')">${ikonKomen()}<span>Komentar ${komen.length}</span></button>
+        <button onclick="pokeDariPanel('${p.user_id}','${esc(pemilik.display_name)}')">${ikonPoke()}<span>Poke</span></button>
       </div>
       <div id="komen-${p.id}">
         ${komen.map((k) => { const kp = semua[k.user_id] || { display_name: "?", avatar_color: "#888" }; return `<div class="komentar"><b>${esc(kp.display_name)}</b> <span class="muted">${waktuRelatif(k.created_at)}</span><div class="teks">${esc(k.body)}</div></div>`; }).join("")}
@@ -618,8 +708,8 @@ async function renderTeman(t){
   const kartuOrang = (p, tombol) => `<div class="item-pengguna">${avatarHtml(p)}<div class="info"><a href="#" class="nama" onclick="lihatProfil('${p.id}');return false">${esc(p.display_name)}</a><div class="sub">@${esc(p.username)}${p.bio ? " — " + esc(p.bio) : ""}</div></div>${tombol || ""}</div>`;
   const tombolUntuk = (p) => {
     const r = relasi.find((f) => idTemanLain(f) === p.id);
-    if (!r) return `<button class="tombol kecil" onclick="tambahTemanUI('${p.id}')">+ Tambah Teman</button>`;
-    if (r.status === "accepted") return `<button class="tombol kecil abu" onclick="bukaChat('${p.id}')">💬 Pesan</button> <button class="tombol kecil" onclick="pokeDariPanel('${p.id}','${esc(p.display_name)}')">👆 Poke</button>`;
+    if (!r) return `<button class="tombol kecil" onclick="tambahTemanUI('${p.id}')">+ Teman</button>`;
+    if (r.status === "accepted") return `<button class="tombol kecil abu" onclick="bukaChat('${p.id}')">Pesan</button> <button class="tombol kecil" onclick="pokeDariPanel('${p.id}','${esc(p.display_name)}')">Poke</button>`;
     if (r.requester_id === me.id) return `<span class="muted">Permintaan terkirim</span>`;
     return `<button class="tombol kecil hijau" onclick="jawabTemanUI('${r.id}',true)">Terima</button> <button class="tombol kecil abu" onclick="jawabTemanUI('${r.id}',false)">Tolak</button>`;
   };
@@ -631,7 +721,7 @@ async function renderTeman(t){
   ${masuk.length ? `<div class="kartu"><h2>Permintaan Pertemanan (${masuk.length})</h2>${masuk.map((f) => { const p = semua[f.requester_id]; return p ? kartuOrang(p, `<button class="tombol kecil hijau" onclick="jawabTemanUI('${f.id}',true)">Terima</button> <button class="tombol kecil abu" onclick="jawabTemanUI('${f.id}',false)">Tolak</button>`) : ""; }).join("")}</div>` : ""}
   ${keluar.length ? `<div class="kartu"><h2>Permintaan Terkirim (${keluar.length})</h2>${keluar.map((f) => { const p = semua[f.addressee_id]; return p ? kartuOrang(p, `<span class="muted">Menunggu jawaban</span>`) : ""; }).join("")}</div>` : ""}
   <div class="kartu"><h2>Teman Saya (${diterima.length})</h2>
-    ${diterima.length ? diterima.map((f) => { const p = semua[idTemanLain(f)]; return p ? kartuOrang(p, `<button class="tombol kecil abu" onclick="bukaChat('${p.id}')">💬 Pesan</button> <button class="tombol kecil" onclick="pokeDariPanel('${p.id}','${esc(p.display_name)}')">👆 Poke</button>`) : ""; }).join("") : `<p class="muted">Belum ada teman. Cari username temanmu di atas lalu tambah.</p>`}
+    ${diterima.length ? diterima.map((f) => { const p = semua[idTemanLain(f)]; return p ? kartuOrang(p, `<button class="tombol kecil abu" onclick="bukaChat('${p.id}')">Pesan</button> <button class="tombol kecil" onclick="pokeDariPanel('${p.id}','${esc(p.display_name)}')">Poke</button>`) : ""; }).join("") : `<p class="muted">Belum ada teman. Cari username temanmu di atas lalu tambah.</p>`}
   </div>
   <div class="kartu"><h2>Semua Pengguna</h2>
     ${(await semuaProfil()).filter((p) => p.id !== me.id).slice(0, 30).map((p) => kartuOrang(p, tombolUntuk(p))).join("") || `<p class="muted">Belum ada pengguna lain.</p>`}
@@ -659,9 +749,10 @@ async function renderProfil(t, userId){
         <div class="muted">@${esc(p.username)} · Bergabung ${p.created_at ? tglIndo(p.created_at) : "-"}</div>
         <div style="margin-top:6px">${p.bio ? esc(p.bio) : "<span class='muted'>Belum ada bio.</span>"}</div>
         ${p.birthdate ? `<div class="kecil" style="margin-top:4px">🎂 Lahir ${tglIndo(p.birthdate)}</div>` : ""}
-        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
-          ${saya ? `<button class="tombol kecil" onclick="editProfilUI()">✏️ Ubah Profil</button>` : ""}
-          ${!saya ? `<button class="tombol kecil" onclick="tambahTemanUI('${p.id}')">+ Tambah Teman</button> <button class="tombol kecil abu" onclick="bukaChat('${p.id}')">💬 Pesan</button> <button class="tombol kecil" onclick="pokeDariPanel('${p.id}','${esc(p.display_name)}')">👆 Poke</button>` : ""}
+        ${saya ? `<div class="stat-baris"><div><b>${temanIds.length}</b>Teman</div><div><b>${wall.length}</b>Kiriman</div></div>` : ""}
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+          ${saya ? `<button class="tombol kecil" onclick="editProfilUI()">Ubah Profil</button>` : ""}
+          ${!saya ? `<button class="tombol kecil" onclick="tambahTemanUI('${p.id}')">+ Teman</button> <button class="tombol kecil abu" onclick="bukaChat('${p.id}')">Pesan</button> <button class="tombol kecil" onclick="pokeDariPanel('${p.id}','${esc(p.display_name)}')">Poke</button>` : ""}
         </div>
       </div>
     </div>
@@ -676,7 +767,7 @@ async function renderProfil(t, userId){
     <h2>Dinding ${esc(p.display_name)}</h2>
     <div class="komposer">
       <textarea id="inWall" placeholder="Tulis sesuatu di dinding ${esc(p.display_name)}…" maxlength="2000"></textarea>
-      <div style="text-align:right;margin-top:6px"><button class="tombol" onclick="bagikanWall('${p.id}')">Tulis di Dinding</button></div>
+      <div style="text-align:right;margin-top:8px"><button class="tombol kecil" onclick="bagikanWall('${p.id}')">Tulis di Dinding</button></div>
     </div>
     <div id="daftarWall">${wall.length ? "" : `<p class="muted" style="margin-top:10px">Belum ada tulisan di dinding ini.</p>`}</div>
   </div>`;
@@ -688,7 +779,7 @@ async function renderProfil(t, userId){
     div.className = "status";
     div.innerHTML = `
       <div class="baris">${avatarHtml(pemilik, "kecil")}<div style="flex:1;min-width:0"><a href="#" class="nama" onclick="lihatProfil('${w.user_id}');return false">${esc(pemilik.display_name)}</a> <span class="muted">${waktuRelatif(w.created_at)}</span>${w.user_id === me.id || w.wall_user_id === me.id ? ` <button class="tombol kecil abu" onclick="hapusStatusUI('${w.id}')">Hapus</button>` : ""}<div class="teks">${esc(w.body)}</div>
-      <div class="aksi"><button class="${suka.some((s) => s.user_id === me.id) ? "suka-aktif" : ""}" onclick="sukaUI('${w.id}')">👍 Suka (${suka.length})</button><button onclick="fokusKomen('${w.id}')">💬 Komentar (${komen.length})</button></div>
+      <div class="aksi"><button class="${suka.some((s) => s.user_id === me.id) ? "suka-aktif" : ""}" onclick="sukaUI('${w.id}')">${ikonSuka(suka.some((s) => s.user_id === me.id))}<span>Suka ${suka.length}</span></button><button onclick="fokusKomen('${w.id}')">${ikonKomen()}<span>Komentar ${komen.length}</span></button></div>
       <div id="komen-${w.id}">${komen.map((k) => { const kp = semua[k.user_id] || { display_name: "?", avatar_color: "#888" }; return `<div class="komentar"><b>${esc(kp.display_name)}</b> <span class="muted">${waktuRelatif(k.created_at)}</span><div class="teks">${esc(k.body)}</div></div>`; }).join("")}</div>
       <div class="komen-form"><input id="inKomen-${w.id}" placeholder="Tulis komentar…" maxlength="500" onkeydown="if(event.key==='Enter')kirimKomenUI('${w.id}')"><button onclick="kirimKomenUI('${w.id}')">Kirim</button></div>
       </div></div>`;
@@ -763,7 +854,7 @@ async function renderGrup(t){
       <h2 style="margin-top:8px">${esc(g.name)}</h2>
       <p class="muted">${esc(g.description || "")}</p>
       <div class="komposer" style="margin-top:10px"><textarea id="inGPost" placeholder="Tulis sesuatu di grup ini…" maxlength="2000"></textarea>
-      <div style="text-align:right;margin-top:6px"><button class="tombol" onclick="kirimGPost('${g.id}')">Kirim ke Grup</button></div></div>
+      <div style="text-align:right;margin-top:8px"><button class="tombol kecil" onclick="kirimGPost('${g.id}')">Kirim ke Grup</button></div></div>
     </div>
     <div class="kartu"><h2>Kiriman Grup</h2><div id="daftarGPost">${kiriman.length ? "" : `<p class="muted">Belum ada kiriman di grup ini.</p>`}</div></div>`;
     for (const k of kiriman) {
@@ -782,10 +873,10 @@ async function renderGrup(t){
     <button class="tombol" onclick="buatGrupUI()">Buat Grup</button>
   </div>
   <div class="kartu"><h2>Grup Saya (${semuaGrup.filter((g) => saya.includes(g.id)).length})</h2>
-    ${semuaGrup.filter((g) => saya.includes(g.id)).map((g) => `<div class="item-pengguna daftar-grup" onclick="grupBuka='${g.id}';tampil('grup')"><span class="avatar" style="background:#e67e22">👥</span><div class="info"><div class="nama">${esc(g.name)}</div><div class="sub">${esc(g.description || "")}</div></div><span class="muted">Buka →</span></div>`).join("") || `<p class="muted">Kamu belum bergabung ke grup mana pun.</p>`}
+    ${semuaGrup.filter((g) => saya.includes(g.id)).map((g) => `<div class="item-pengguna daftar-grup" onclick="grupBuka='${g.id}';tampil('grup')"><span class="avatar" style="background:linear-gradient(135deg,#ff5b6e,#ff2442)">${ikonGrup()}</span><div class="info"><div class="nama">${esc(g.name)}</div><div class="sub">${esc(g.description || "")}</div></div><span class="muted">Buka →</span></div>`).join("") || `<p class="muted">Kamu belum bergabung ke grup mana pun.</p>`}
   </div>
   <div class="kartu"><h2>Semua Grup (${semuaGrup.length})</h2>
-    ${semuaGrup.map((g) => `<div class="item-pengguna"><span class="avatar" style="background:#e67e22">👥</span><div class="info"><div class="nama">${esc(g.name)}</div><div class="sub">${esc(g.description || "")}</div></div>${saya.includes(g.id) ? `<button class="tombol kecil abu" onclick="grupBuka='${g.id}';tampil('grup')">Buka</button>` : `<button class="tombol kecil" onclick="gabungGrupUI('${g.id}')">Gabung</button>`}</div>`).join("") || `<p class="muted">Belum ada grup. Buat grup pertama di atas!</p>`}
+    ${semuaGrup.map((g) => `<div class="item-pengguna"><span class="avatar" style="background:linear-gradient(135deg,#ff5b6e,#ff2442)">${ikonGrup()}</span><div class="info"><div class="nama">${esc(g.name)}</div><div class="sub">${esc(g.description || "")}</div></div>${saya.includes(g.id) ? `<button class="tombol kecil abu" onclick="grupBuka='${g.id}';tampil('grup')">Buka</button>` : `<button class="tombol kecil" onclick="gabungGrupUI('${g.id}')">Gabung</button>`}</div>`).join("") || `<p class="muted">Belum ada grup. Buat grup pertama di atas!</p>`}
   </div>`;
   renderPanelKanan();
 }
@@ -833,10 +924,10 @@ async function renderCatatan(t){
     <div class="field"><label>Judul</label><input id="inJudulCatatan" value="${buka ? esc(buka.title) : ""}" placeholder="Judul catatan…"></div>
     <div class="field"><label>Isi</label><textarea class="editor-catatan" id="inIsiCatatan" placeholder="Tulis catatanmu di sini…">${buka ? esc(buka.body) : ""}</textarea></div>
     <label class="kecil"><input type="checkbox" id="inPublikCatatan" ${buka && buka.is_public ? "checked" : ""}> Publikasikan (bisa dibaca semua pengguna)</label>
-    <div style="margin-top:10px;display:flex;gap:8px"><button class="tombol" onclick="simpanCatatanUI()">💾 Simpan Catatan</button>${buka ? `<button class="tombol abu" onclick="catatanBuka=null;tampil('catatan')">Batal</button>` : ""}</div>
+    <div style="margin-top:12px;display:flex;gap:8px"><button class="tombol" onclick="simpanCatatanUI()">Simpan Catatan</button>${buka ? `<button class="tombol abu" onclick="catatanBuka=null;tampil('catatan')">Batal</button>` : ""}</div>
   </div>
   <div class="kartu"><h2>Catatan Saya (${daftar.length})</h2>
-    ${daftar.map((n) => `<div class="item-pengguna"><span class="avatar" style="background:#e67e22">📒</span><div class="info"><div class="judul-catatan">${esc(n.title || "(tanpa judul)")} ${n.is_public ? `<span class="chip">Publik</span>` : `<span class="chip">Pribadi</span>`}</div><div class="sub">${esc((n.body || "").slice(0, 120))}${(n.body || "").length > 120 ? "…" : ""}</div><div class="muted">${waktuRelatif(n.updated_at)}</div></div><button class="tombol kecil" onclick="catatanBuka='${n.id}';tampil('catatan')">Buka</button> <button class="tombol kecil abu" onclick="hapusCatatanUI('${n.id}')">Hapus</button></div>`).join("") || `<p class="muted">Belum ada catatan. Tulis catatan pertamamu di atas!</p>`}
+    ${daftar.map((n) => `<div class="item-pengguna"><span class="avatar" style="background:linear-gradient(135deg,#ff5b6e,#ff2442)">${ikonCatatan()}</span><div class="info"><div class="judul-catatan">${esc(n.title || "(tanpa judul)")} ${n.is_public ? `<span class="chip">Publik</span>` : `<span class="chip">Pribadi</span>`}</div><div class="sub">${esc((n.body || "").slice(0, 120))}${(n.body || "").length > 120 ? "…" : ""}</div><div class="muted">${waktuRelatif(n.updated_at)}</div></div><button class="tombol kecil" onclick="catatanBuka='${n.id}';tampil('catatan')">Buka</button> <button class="tombol kecil abu" onclick="hapusCatatanUI('${n.id}')">Hapus</button></div>`).join("") || `<p class="muted">Belum ada catatan. Tulis catatan pertamamu di atas!</p>`}
   </div>`;
   renderPanelKanan();
 }
@@ -881,7 +972,7 @@ async function renderPesan(t){
     t.innerHTML = `
     <div class="kartu"><button class="tombol kecil abu" onclick="chatDengan=null;tampil('pesan')">← Semua Pesan</button>
       <div class="baris-tengah" style="margin-top:10px">${avatarHtml(lawan)}<div><div class="nama">${esc(lawan.display_name)}</div><div class="muted">@${esc(lawan.username)}</div></div>
-      <span style="margin-left:auto"><button class="tombol kecil" onclick="pokeDariPanel('${lawan.id}','${esc(lawan.display_name)}')">👆 Poke</button></span></div>
+      <span style="margin-left:auto"><button class="tombol kecil" onclick="pokeDariPanel('${lawan.id}','${esc(lawan.display_name)}')">Poke</button></span></div>
     </div>
     <div class="kartu"><div class="chat-wrap"><div class="chat-area" id="areaChat">
       ${riwayat.length ? riwayat.map((m) => `<div class="gelembung ${m.sender_id === me.id ? "kirim" : "terima"}">${esc(m.body)}<div class="waktu">${jamSingkat(m.created_at)}</div></div>`).join("") : `<p class="muted tengah">Belum ada pesan. Sapa ${esc(lawan.display_name)}!</p>`}
@@ -893,10 +984,10 @@ async function renderPesan(t){
   }
   t.innerHTML = `
   <div class="kartu"><h2>Pesan Masuk</h2>
-    ${percakapan.length ? percakapan.map(([lainId, m]) => { const p = semua[lainId]; if (!p) return ""; const belum = mode === "local" ? 0 : 0; return `<div class="item-pengguna daftar-grup" onclick="bukaChat('${lainId}')">${avatarHtml(p)}<div class="info"><div class="nama">${esc(p.display_name)}</div><div class="sub">${m.sender_id === me.id ? "Kamu: " : ""}${esc((m.body || "").slice(0, 80))}</div></div><span class="muted">${waktuRelatif(m.created_at)}</span></div>`; }).join("") : `<p class="muted">Belum ada percakapan.</p>`}
+    ${percakapan.length ? percakapan.map(([lainId, m]) => { const p = semua[lainId]; if (!p) return ""; return `<div class="item-pengguna daftar-grup" onclick="bukaChat('${lainId}')">${avatarHtml(p)}<div class="info"><div class="nama">${esc(p.display_name)}</div><div class="sub">${m.sender_id === me.id ? "Kamu: " : ""}${esc((m.body || "").slice(0, 80))}</div></div><span class="muted">${waktuRelatif(m.created_at)}</span></div>`; }).join("") : `<p class="muted">Belum ada percakapan.</p>`}
   </div>
   <div class="kartu"><h2>Mulai Chat dengan Teman</h2>
-    ${temanIds.length ? temanIds.map((id) => { const p = semua[id]; return p ? `<div class="item-pengguna">${avatarHtml(p)}<div class="info"><div class="nama">${esc(p.display_name)}</div><div class="sub">@${esc(p.username)}</div></div><button class="tombol kecil" onclick="bukaChat('${p.id}')">💬 Chat</button></div>` : ""; }).join("") : `<p class="muted">Belum ada teman. Tambah teman dulu di menu Teman.</p>`}
+    ${temanIds.length ? temanIds.map((id) => { const p = semua[id]; return p ? `<div class="item-pengguna">${avatarHtml(p)}<div class="info"><div class="nama">${esc(p.display_name)}</div><div class="sub">@${esc(p.username)}</div></div><button class="tombol kecil" onclick="bukaChat('${p.id}')">Chat</button></div>` : ""; }).join("") : `<p class="muted">Belum ada teman. Tambah teman dulu di menu Teman.</p>`}
   </div>`;
   renderPanelKanan();
 }
@@ -905,6 +996,7 @@ async function renderPesan(t){
 window.addEventListener("DOMContentLoaded", async () => {
   tampilAuth();
   const ok = await initSupabase();
+  if (pilihanLokal) return;
   if (ok) { mode = "cloud"; infoAuth(`<div class="pesan-info hijau">☁️ Tersambung ke Supabase. Silakan daftar atau masuk.</div>`); }
   else {
     mode = "local";
