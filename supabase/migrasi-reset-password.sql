@@ -30,6 +30,7 @@ begin
   if p_username is null or p_baru is null or char_length(p_baru) < 6 then
     return 'password_pendek';
   end if;
+  if p_kode is null then return 'kode_salah'; end if;
   select id, rc_hash, reset_gagal, reset_blokir_sampai
     into v_id, v_hash, v_gagal, v_blokir
     from public.humba_profiles where username = lower(p_username);
@@ -37,7 +38,7 @@ begin
   if v_hash is null then return 'belum_ada_kode'; end if;
   if v_blokir is not null and v_blokir > now() then return 'terlalu_banyak'; end if;
   v_hitung := encode(digest(upper(regexp_replace(p_kode, '[^A-Z0-9]', '', 'g')), 'sha256'), 'hex');
-  if v_hitung <> v_hash then
+  if v_hitung is distinct from v_hash then
     v_gagal := coalesce(v_gagal, 0) + 1;
     if v_gagal >= 5 then
       update public.humba_profiles set reset_gagal = 0, reset_blokir_sampai = now() + interval '15 minutes' where id = v_id;
@@ -59,6 +60,7 @@ create or replace function public.humba_ganti_kode(p_hash text)
 returns text language plpgsql security definer set search_path = public as $$
 begin
   if auth.uid() is null then return 'tidak_masuk'; end if;
+  if p_hash is null then return 'kode_salah'; end if;
   update public.humba_profiles set rc_hash = p_hash, reset_gagal = 0, reset_blokir_sampai = null where id = auth.uid();
   return 'ok';
 end;

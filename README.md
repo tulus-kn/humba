@@ -55,6 +55,8 @@ Jejaring sosial nostalgia ala Facebook 2009, tersambung ke Supabase supaya akun 
 
 11. **Perbaikan review kedua (satu kali): SQL Editor → New query → tempel seluruh isi file `supabase/migrasi-semua.sql` (sudah berisi bagian 8) → Run.** File aman di-run ulang, jadi menempel ulang seluruh file tidak masalah. Isinya: column grant produk (penjual tidak bisa lagi mengubah `created_at` barang sendiri), batas panjang teks produk, kolom `updated_at` + trigger di 5 tabel yang bisa diedit, dan column grant profil + catatan.
 
+12. **Update keamanan v1.2 (satu kali): refresh dulu aplikasi di HP sampai kartu Tentang menampilkan v1.2, BARU tempel seluruh isi file `supabase/migrasi-semua.sql` (sudah berisi bagian 9 dan 10) → Run.** Urutannya penting: bagian 10 mencabut hak baca kolom reset (`rc_hash`, `reset_gagal`, `reset_blokir_sampai`) dari profil, dan aplikasi lama masih memakai `select("*")` sehingga akan error kalau SQL-nya dijalankan duluan. Isi bagian 9: komentar dan like kini mengikuti privasi postingan induknya (status "Teman saja" tidak bisa lagi dikomentari/disukai orang luar). Isi bagian 10: kolom reset tidak bisa lagi dibaca pengguna lain. Di aplikasi: celah reset password lewat kode NULL sudah ditutup, kode pemulihan kini dibuat dengan `crypto.getRandomValues`, draft/riwayat/keranjang/wishlist/pesanan kini tersimpan per akun (data lama dipindah otomatis), tombol Hapus Cache tidak lagi menghapus database Mode Lokal, dan detail status kini diambil langsung by id (status lama tidak lagi "tidak ditemukan").
+
 **Jalan pintas:** langkah 4–11 sudah digabung dalam **satu file `supabase/migrasi-semua.sql`** — tempel file itu saja, tidak perlu tempel satu-satu.
 
 ## Cara pakai (pengguna)

@@ -239,6 +239,7 @@ begin
   if p_username is null or p_baru is null or char_length(p_baru) < 6 then
     return 'password_pendek';
   end if;
+  if p_kode is null then return 'kode_salah'; end if;
   select id, rc_hash, reset_gagal, reset_blokir_sampai
     into v_id, v_hash, v_gagal, v_blokir
     from public.humba_profiles where username = lower(p_username);
@@ -246,7 +247,7 @@ begin
   if v_hash is null then return 'belum_ada_kode'; end if;
   if v_blokir is not null and v_blokir > now() then return 'terlalu_banyak'; end if;
   v_hitung := encode(digest(upper(regexp_replace(p_kode, '[^A-Z0-9]', '', 'g')), 'sha256'), 'hex');
-  if v_hitung <> v_hash then
+  if v_hitung is distinct from v_hash then
     v_gagal := coalesce(v_gagal, 0) + 1;
     if v_gagal >= 5 then
       update public.humba_profiles set reset_gagal = 0, reset_blokir_sampai = now() + interval '15 minutes' where id = v_id;
@@ -268,6 +269,7 @@ create or replace function public.humba_ganti_kode(p_hash text)
 returns text language plpgsql security definer set search_path = public as $$
 begin
   if auth.uid() is null then return 'tidak_masuk'; end if;
+  if p_hash is null then return 'kode_salah'; end if;
   update public.humba_profiles set rc_hash = p_hash, reset_gagal = 0, reset_blokir_sampai = null where id = auth.uid();
   return 'ok';
 end;
@@ -403,6 +405,58 @@ grant update (display_name, bio, birthdate, avatar_url, cover_url, last_seen, rc
 -- ---------- 5) Column grant catatan ----------
 revoke update on public.humba_notes from authenticated;
 grant update (title, body, is_public, updated_at) on public.humba_notes to authenticated;
+
+-- ================= 9) Privasi komentar & like ikut postingan (review ChatGPT) =================
+-- Selama ini humba_comments / humba_likes bisa dibaca SEMUA user login
+-- (using (true)) dan dikomentari/dislike siapa saja yang tahu id-nya,
+-- padahal postingannya "Teman saja". Sekarang SELECT + INSERT keduanya
+-- mengikuti aturan visibility postingan induk (publik / pemilik / teman).
+-- DELETE/UPDATE tidak berubah (hanya milik sendiri).
+
+drop policy if exists "humba_comments_select_all" on public.humba_comments;
+create policy "humba_comments_select_all" on public.humba_comments
+  for select to authenticated using (
+    exists (select 1 from public.humba_posts p where p.id = humba_comments.post_id
+      and (p.visibility = 'public' or p.user_id = auth.uid()
+        or exists (select 1 from public.humba_friends f where f.status = 'accepted'
+          and ((f.requester_id = auth.uid() and f.addressee_id = p.user_id)
+            or (f.requester_id = p.user_id and f.addressee_id = auth.uid())))))
+  );
+drop policy if exists "humba_comments_insert_own" on public.humba_comments;
+create policy "humba_comments_insert_own" on public.humba_comments
+  for insert to authenticated with check (user_id = auth.uid()
+    and exists (select 1 from public.humba_posts p where p.id = humba_comments.post_id
+      and (p.visibility = 'public' or p.user_id = auth.uid()
+        or exists (select 1 from public.humba_friends f where f.status = 'accepted'
+          and ((f.requester_id = auth.uid() and f.addressee_id = p.user_id)
+            or (f.requester_id = p.user_id and f.addressee_id = auth.uid()))))));
+
+drop policy if exists "humba_likes_select_all" on public.humba_likes;
+create policy "humba_likes_select_all" on public.humba_likes
+  for select to authenticated using (
+    exists (select 1 from public.humba_posts p where p.id = humba_likes.post_id
+      and (p.visibility = 'public' or p.user_id = auth.uid()
+        or exists (select 1 from public.humba_friends f where f.status = 'accepted'
+          and ((f.requester_id = auth.uid() and f.addressee_id = p.user_id)
+            or (f.requester_id = p.user_id and f.addressee_id = auth.uid())))))
+  );
+drop policy if exists "humba_likes_insert_own" on public.humba_likes;
+create policy "humba_likes_insert_own" on public.humba_likes
+  for insert to authenticated with check (user_id = auth.uid()
+    and exists (select 1 from public.humba_posts p where p.id = humba_likes.post_id
+      and (p.visibility = 'public' or p.user_id = auth.uid()
+        or exists (select 1 from public.humba_friends f where f.status = 'accepted'
+          and ((f.requester_id = auth.uid() and f.addressee_id = p.user_id)
+            or (f.requester_id = p.user_id and f.addressee_id = auth.uid()))))));
+
+-- ================= 10) Sembunyikan kolom reset dari pembacaan (review ChatGPT) =================
+-- rc_hash / reset_gagal / reset_blokir_sampai selama ini bisa dibaca
+-- semua user login lewat select("*") profil. Sekarang dicabut hak
+-- bacanya; yang boleh menyentuh ketiganya hanya RPC security-definer
+-- (reset/ganti kode) dan UPDATE rc_hash saat daftar (grant tetap ada).
+-- PENTING: jalankan bagian ini SETELAH aplikasi v1.2 termuat di HP.
+
+revoke select (rc_hash, reset_gagal, reset_blokir_sampai) on public.humba_profiles from authenticated, anon;
 
 -- SELESAI. Query di bawah hanya menampilkan daftar policy untuk
 -- dicek (tidak mengubah apa-apa) — hasilnya akan terlihat di editor.

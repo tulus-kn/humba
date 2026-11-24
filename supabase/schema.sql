@@ -40,6 +40,11 @@ create table if not exists public.humba_profiles (
   bio text not null default '',
   birthdate date,
   avatar_color text not null default '#d35400',
+  avatar_url text,
+  cover_url text,
+  rc_hash text,
+  reset_gagal int not null default 0,
+  reset_blokir_sampai timestamptz,
   last_seen timestamptz,
   created_at timestamptz not null default now(),
   constraint humba_profiles_username_chk check (username ~ '^[a-z0-9._]{3,20}$'),
@@ -53,10 +58,12 @@ create table if not exists public.humba_posts (
   user_id uuid not null references public.humba_profiles (id) on delete cascade,
   wall_user_id uuid references public.humba_profiles (id) on delete cascade,
   body text not null,
+  image_url text,
+  video_url text,
   visibility text not null default 'public',
   created_at timestamptz not null default now(),
   updated_at timestamptz,
-  constraint humba_posts_body_chk check (char_length(body) between 1 and 2000),
+  constraint humba_posts_body_chk check (char_length(body) between 0 and 2000 and (char_length(body) >= 1 or image_url is not null or video_url is not null)),
   constraint humba_posts_visibility_chk check (visibility in ('public', 'friends'))
 );
 create index if not exists humba_posts_user_idx on public.humba_posts (user_id, created_at desc);
@@ -102,7 +109,8 @@ create table if not exists public.humba_groups (
   name text not null,
   description text not null default '',
   created_by uuid not null references public.humba_profiles (id) on delete cascade,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  updated_at timestamptz
 );
 create table if not exists public.humba_group_members (
   group_id uuid not null references public.humba_groups (id) on delete cascade,
@@ -157,6 +165,29 @@ create table if not exists public.humba_pokes (
 );
 create index if not exists humba_pokes_to_idx on public.humba_pokes (to_id, created_at desc);
 
+-- ---------- Tabel barang Toko ----------
+create table if not exists public.humba_produk (
+  id uuid primary key default gen_random_uuid(),
+  seller_id uuid not null references public.humba_profiles (id) on delete cascade,
+  nama text not null,
+  harga integer not null default 0,
+  keterangan text not null default '',
+  lokasi text not null default '',
+  wa text not null default '',
+  kategori text not null default 'Lainnya',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz,
+  constraint humba_produk_nama_chk check (char_length(nama) between 1 and 200),
+  constraint humba_produk_harga_chk check (harga >= 0),
+  constraint humba_produk_keterangan_chk check (char_length(keterangan) <= 2000),
+  constraint humba_produk_lokasi_chk check (char_length(lokasi) <= 100),
+  constraint humba_produk_wa_chk check (char_length(wa) <= 20 and wa ~ '^[0-9+ -]*$'),
+  constraint humba_produk_kategori_chk check (char_length(kategori) <= 50)
+);
+create index if not exists humba_produk_seller_idx on public.humba_produk (seller_id, created_at desc);
+create index if not exists humba_produk_created_idx on public.humba_produk (created_at desc);
+
+
 -- Trigger: isi updated_at otomatis saat ada edit.
 create or replace function public.humba_set_updated_at()
 returns trigger language plpgsql as $$
@@ -177,6 +208,9 @@ create trigger humba_groups_updated_at before update on public.humba_groups
 drop trigger if exists humba_group_posts_updated_at on public.humba_group_posts;
 create trigger humba_group_posts_updated_at before update on public.humba_group_posts
   for each row execute function public.humba_set_updated_at();
+drop trigger if exists humba_produk_updated_at on public.humba_produk;
+create trigger humba_produk_updated_at before update on public.humba_produk
+  for each row execute function public.humba_set_updated_at();
 
 -- ============================================================
 -- Row Level Security
@@ -192,6 +226,7 @@ alter table public.humba_group_posts enable row level security;
 alter table public.humba_notes enable row level security;
 alter table public.humba_messages enable row level security;
 alter table public.humba_pokes enable row level security;
+alter table public.humba_produk enable row level security;
 
 -- Profil: semua user login boleh membaca profil (perlu untuk
 -- cari teman, dinding, ulang tahun, dan daftar online);
@@ -207,6 +242,9 @@ create policy "humba_profiles_update_own" on public.humba_profiles
   for update to authenticated using (id = auth.uid()) with check (id = auth.uid());
 revoke update on public.humba_profiles from authenticated;
 grant update (display_name, bio, birthdate, avatar_url, cover_url, last_seen, rc_hash) on public.humba_profiles to authenticated;
+
+-- Kolom reset hanya boleh dibaca RPC (lihat migrasi-sembunyikan-rc-hash.sql).
+revoke select (rc_hash, reset_gagal, reset_blokir_sampai) on public.humba_profiles from authenticated, anon;
 
 -- Status: Kabar Beranda dibaca semua user login; tulis/hapus
 -- hanya status sendiri (atau status di dinding sendiri).
@@ -250,10 +288,21 @@ grant update (body, image_url, video_url, visibility, updated_at) on public.humb
 -- hapus hanya komentar sendiri atau komentar di status sendiri.
 drop policy if exists "humba_comments_select_all" on public.humba_comments;
 create policy "humba_comments_select_all" on public.humba_comments
-  for select to authenticated using (true);
+  for select to authenticated using (
+    exists (select 1 from public.humba_posts p where p.id = humba_comments.post_id
+      and (p.visibility = 'public' or p.user_id = auth.uid()
+        or exists (select 1 from public.humba_friends f where f.status = 'accepted'
+          and ((f.requester_id = auth.uid() and f.addressee_id = p.user_id)
+            or (f.requester_id = p.user_id and f.addressee_id = auth.uid())))))
+  );
 drop policy if exists "humba_comments_insert_own" on public.humba_comments;
 create policy "humba_comments_insert_own" on public.humba_comments
-  for insert to authenticated with check (user_id = auth.uid());
+  for insert to authenticated with check (user_id = auth.uid()
+    and exists (select 1 from public.humba_posts p where p.id = humba_comments.post_id
+      and (p.visibility = 'public' or p.user_id = auth.uid()
+        or exists (select 1 from public.humba_friends f where f.status = 'accepted'
+          and ((f.requester_id = auth.uid() and f.addressee_id = p.user_id)
+            or (f.requester_id = p.user_id and f.addressee_id = auth.uid()))))));
 drop policy if exists "humba_comments_delete_own" on public.humba_comments;
 create policy "humba_comments_delete_own" on public.humba_comments
   for delete to authenticated using (
@@ -269,10 +318,21 @@ grant update (body, updated_at) on public.humba_comments to authenticated;
 -- Suka: dibaca semua; tambah/hapus hanya sebagai diri sendiri.
 drop policy if exists "humba_likes_select_all" on public.humba_likes;
 create policy "humba_likes_select_all" on public.humba_likes
-  for select to authenticated using (true);
+  for select to authenticated using (
+    exists (select 1 from public.humba_posts p where p.id = humba_likes.post_id
+      and (p.visibility = 'public' or p.user_id = auth.uid()
+        or exists (select 1 from public.humba_friends f where f.status = 'accepted'
+          and ((f.requester_id = auth.uid() and f.addressee_id = p.user_id)
+            or (f.requester_id = p.user_id and f.addressee_id = auth.uid())))))
+  );
 drop policy if exists "humba_likes_insert_own" on public.humba_likes;
 create policy "humba_likes_insert_own" on public.humba_likes
-  for insert to authenticated with check (user_id = auth.uid());
+  for insert to authenticated with check (user_id = auth.uid()
+    and exists (select 1 from public.humba_posts p where p.id = humba_likes.post_id
+      and (p.visibility = 'public' or p.user_id = auth.uid()
+        or exists (select 1 from public.humba_friends f where f.status = 'accepted'
+          and ((f.requester_id = auth.uid() and f.addressee_id = p.user_id)
+            or (f.requester_id = p.user_id and f.addressee_id = auth.uid()))))));
 drop policy if exists "humba_likes_delete_own" on public.humba_likes;
 create policy "humba_likes_delete_own" on public.humba_likes
   for delete to authenticated using (user_id = auth.uid());
@@ -392,6 +452,24 @@ drop policy if exists "humba_pokes_insert_own" on public.humba_pokes;
 create policy "humba_pokes_insert_own" on public.humba_pokes
   for insert to authenticated with check (from_id = auth.uid());
 
+-- Barang Toko: semua user login boleh melihat; tulis/hapus hanya
+-- barang sendiri.
+drop policy if exists "humba_produk_select_all" on public.humba_produk;
+create policy "humba_produk_select_all" on public.humba_produk
+  for select to authenticated using (true);
+drop policy if exists "humba_produk_insert_own" on public.humba_produk;
+create policy "humba_produk_insert_own" on public.humba_produk
+  for insert to authenticated with check (seller_id = auth.uid());
+drop policy if exists "humba_produk_update_own" on public.humba_produk;
+create policy "humba_produk_update_own" on public.humba_produk
+  for update to authenticated using (seller_id = auth.uid()) with check (seller_id = auth.uid());
+drop policy if exists "humba_produk_delete_own" on public.humba_produk;
+create policy "humba_produk_delete_own" on public.humba_produk
+  for delete to authenticated using (seller_id = auth.uid());
+revoke update on public.humba_produk from authenticated;
+grant update (nama, harga, keterangan, lokasi, wa, kategori, updated_at) on public.humba_produk to authenticated;
+
+
 -- ============================================================
 -- Realtime: izinkan Postgres mengirim perubahan tabel ini
 -- ke client yang berlangganan (status, pesan, dan poke
@@ -448,3 +526,72 @@ exception when duplicate_object then
   null;
 end
 $$;
+do $$
+begin
+  alter publication supabase_realtime add table public.humba_produk;
+exception when duplicate_object then
+  null;
+end
+$$;
+
+-- ============================================================
+-- Reset password pakai kode pemulihan (meniru Pos-El v4.1).
+-- Fungsi di bawah sudah diperbaiki: kode NULL ditolak dan
+-- perbandingan hash memakai IS DISTINCT FROM (tidak bisa lolos
+-- lewat NULL). Lihat migrasi-reset-password.sql.
+-- ============================================================
+create extension if not exists pgcrypto;
+
+alter table public.humba_profiles add column if not exists rc_hash text;
+alter table public.humba_profiles add column if not exists reset_gagal int not null default 0;
+alter table public.humba_profiles add column if not exists reset_blokir_sampai timestamptz;
+
+create or replace function public.humba_reset_password(p_username text, p_kode text, p_baru text)
+returns text language plpgsql security definer set search_path = public as $$
+declare
+  v_id uuid;
+  v_hash text;
+  v_gagal int;
+  v_blokir timestamptz;
+  v_hitung text;
+begin
+  if p_username is null or p_baru is null or char_length(p_baru) < 6 then
+    return 'password_pendek';
+  end if;
+  if p_kode is null then return 'kode_salah'; end if;
+  select id, rc_hash, reset_gagal, reset_blokir_sampai
+    into v_id, v_hash, v_gagal, v_blokir
+    from public.humba_profiles where username = lower(p_username);
+  if v_id is null then return 'tidak_ada'; end if;
+  if v_hash is null then return 'belum_ada_kode'; end if;
+  if v_blokir is not null and v_blokir > now() then return 'terlalu_banyak'; end if;
+  v_hitung := encode(digest(upper(regexp_replace(p_kode, '[^A-Z0-9]', '', 'g')), 'sha256'), 'hex');
+  if v_hitung is distinct from v_hash then
+    v_gagal := coalesce(v_gagal, 0) + 1;
+    if v_gagal >= 5 then
+      update public.humba_profiles set reset_gagal = 0, reset_blokir_sampai = now() + interval '15 minutes' where id = v_id;
+    else
+      update public.humba_profiles set reset_gagal = v_gagal where id = v_id;
+    end if;
+    return 'kode_salah';
+  end if;
+  update auth.users set encrypted_password = crypt(p_baru, gen_salt('bf'))
+    where email = lower(p_username) || '@humba.local';
+  update public.humba_profiles set reset_gagal = 0, reset_blokir_sampai = null where id = v_id;
+  return 'ok';
+end;
+$$;
+revoke all on function public.humba_reset_password(text, text, text) from public;
+grant execute on function public.humba_reset_password(text, text, text) to anon, authenticated;
+
+create or replace function public.humba_ganti_kode(p_hash text)
+returns text language plpgsql security definer set search_path = public as $$
+begin
+  if auth.uid() is null then return 'tidak_masuk'; end if;
+  if p_hash is null then return 'kode_salah'; end if;
+  update public.humba_profiles set rc_hash = p_hash, reset_gagal = 0, reset_blokir_sampai = null where id = auth.uid();
+  return 'ok';
+end;
+$$;
+revoke all on function public.humba_ganti_kode(text) from public;
+grant execute on function public.humba_ganti_kode(text) to authenticated;
