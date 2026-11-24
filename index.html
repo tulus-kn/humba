@@ -1966,14 +1966,15 @@ function hapusCacheUI(){
   tampil("pengaturan");
 }
 function renderTentang(t){
+  const logoEl = document.querySelector('img[alt="Logo HUMBA"]');
+  const logoHtml = logoEl ? `<img src="${logoEl.src}" width="62" height="62" alt="Logo HUMBA" style="border-radius:14px">` : `<div style="width:62px;height:62px;border-radius:14px;background:#ff2442;color:#fff;font-size:32px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto">H</div>`;
   t.innerHTML = `<div class="kartu tengah">
-    <div style="margin:8px 0"><svg width="62" height="62" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#ff2442"/><rect x="10" y="9" width="28" height="30" rx="4" fill="#fff"/><path d="M24 9v30" stroke="#ffc9d2" stroke-width="2"/><g stroke="#ff8fa1" stroke-width="2" stroke-linecap="round"><path d="M14 16h6"/><path d="M14 23h6"/><path d="M14 30h6"/><path d="M28 16h6"/><path d="M28 23h6"/><path d="M28 30h6"/></g></svg></div>
+    <div style="margin:8px 0">${logoHtml}</div>
     <h2>HUMBA</h2>
-    <p class="muted">v1.1 — tampilan ala RedNote</p>
-    <p style="margin-top:10px">Jejaring sosial khusus Sumba — kembali ke masa sederhana. Tulis status, tambah teman, buat grup, tulis catatan, kirim pesan, dan jualan di Toko. Dibangun dengan Supabase, bisa juga jalan dalam Mode Lokal di HP sendiri.</p>
+    <p class="muted">v1.1</p>
+    <p style="margin-top:10px">Jejaring sosial khusus Sumba \u2014 kembali ke masa sederhana. Tulis status, tambah teman, buat grup, tulis catatan, kirim pesan, dan jualan di Toko. Dibangun dengan Supabase, bisa juga jalan dalam Mode Lokal di HP sendiri.</p>
   </div>`;
 }
-
 /* ---------- Mulai ---------- */
 window.addEventListener("DOMContentLoaded", async () => {
   $("layarAuth").style.display = "block";
