@@ -200,7 +200,17 @@ create policy "humba_posts_delete_own" on public.humba_posts
   for delete to authenticated using (user_id = auth.uid() or wall_user_id = auth.uid());
 drop policy if exists "humba_posts_update_own" on public.humba_posts;
 create policy "humba_posts_update_own" on public.humba_posts
-  for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+  for update to authenticated using (user_id = auth.uid())
+  with check (
+    user_id = auth.uid()
+    and (wall_user_id is null
+      or wall_user_id = auth.uid()
+      or exists (select 1 from public.humba_friends f where f.status = 'accepted'
+        and ((f.requester_id = auth.uid() and f.addressee_id = wall_user_id)
+          or (f.requester_id = wall_user_id and f.addressee_id = auth.uid()))))
+  );
+revoke update on public.humba_posts from authenticated;
+grant update (body, image_url, video_url) on public.humba_posts to authenticated;
 
 -- Komentar: dibaca semua; tulis sebagai diri sendiri;
 -- hapus hanya komentar sendiri atau komentar di status sendiri.
@@ -219,6 +229,8 @@ create policy "humba_comments_delete_own" on public.humba_comments
 drop policy if exists "humba_comments_update_own" on public.humba_comments;
 create policy "humba_comments_update_own" on public.humba_comments
   for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+revoke update on public.humba_comments from authenticated;
+grant update (body) on public.humba_comments to authenticated;
 
 -- Suka: dibaca semua; tambah/hapus hanya sebagai diri sendiri.
 drop policy if exists "humba_likes_select_all" on public.humba_likes;
@@ -266,6 +278,8 @@ create policy "humba_groups_insert_creator" on public.humba_groups
 drop policy if exists "humba_groups_update_creator" on public.humba_groups;
 create policy "humba_groups_update_creator" on public.humba_groups
   for update to authenticated using (created_by = auth.uid()) with check (created_by = auth.uid());
+revoke update on public.humba_groups from authenticated;
+grant update (name, description) on public.humba_groups to authenticated;
 
 -- Anggota grup: semua boleh membaca daftar anggota; gabung
 -- hanya sebagai diri sendiri.
@@ -298,6 +312,8 @@ create policy "humba_group_posts_delete_own" on public.humba_group_posts
 drop policy if exists "humba_group_posts_update_own" on public.humba_group_posts;
 create policy "humba_group_posts_update_own" on public.humba_group_posts
   for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+revoke update on public.humba_group_posts from authenticated;
+grant update (body) on public.humba_group_posts to authenticated;
 
 -- Catatan (Notes): catatan pribadi hanya pemiliknya; catatan
 -- publik (is_public) dibaca semua user login.
