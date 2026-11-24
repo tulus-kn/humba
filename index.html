@@ -1049,7 +1049,7 @@ async function renderProfil(t, userId){
         <h2 style="margin-bottom:2px">${esc(p.display_name)}</h2>
         <div class="muted">@${esc(p.username)} · Bergabung ${p.created_at ? tglIndo(p.created_at) : "-"}</div>
         <div style="margin-top:6px">${p.bio ? esc(p.bio) : "<span class='muted'>Belum ada bio.</span>"}</div>
-        ${p.birthdate ? `<div class="kecil" style="margin-top:4px">🎂 Lahir ${tglIndo(p.birthdate)}</div>` : ""}
+        ${p.birthdate ? `<div class="kecil" style="margin-top:4px">🎂 Lahir ${tglUltah(p.birthdate)}</div>` : ""}
         ${saya ? `<div class="stat-baris"><div><b>${temanIds.length}</b>Teman</div><div><b>${wall.length}</b>Kiriman</div></div>` : ""}
         <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
           ${saya ? `<button class="tombol kecil" onclick="editProfilUI()">Ubah Profil</button>` : ""}
