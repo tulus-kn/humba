@@ -436,6 +436,7 @@ const avatarHtml = (p, cls) => (p && p.avatar_url)
   ? `<span class="avatar ${cls||""}"><img src="${esc(p.avatar_url)}" alt=""></span>`
   : `<span class="avatar ${cls||""}" style="background:${p.avatar_color||warnaAvatar(p.display_name||p.username)}">${esc((p.display_name||p.username||"?")[0].toUpperCase())}</span>`;
 const tglIndo = (d) => { try { return new Date(d).toLocaleDateString("id-ID",{day:"numeric",month:"long",year:"numeric"}); } catch(e){ return String(d||""); } };
+const tglUltah = (d) => { try { return new Date(d).toLocaleDateString("id-ID",{day:"numeric",month:"long"}); } catch(e){ return String(d||""); } };
 const waktuRelatif = (iso) => { const s = Math.floor((Date.now()-new Date(iso).getTime())/1000); if (s < 60) return "baru saja"; if (s < 3600) return Math.floor(s/60)+" mnt lalu"; if (s < 86400) return Math.floor(s/3600)+" jam lalu"; const h = Math.floor(s/86400); if (h < 30) return h+" hari lalu"; return tglIndo(iso); };
 const jamSingkat = (iso) => { try { return new Date(iso).toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit"}); } catch(e){ return ""; } };
 const uidBaru = () => (crypto.randomUUID ? crypto.randomUUID() : "id-" + Date.now() + "-" + Math.random().toString(36).slice(2));
@@ -835,7 +836,7 @@ async function renderPanelKanan(){
       : `<span class="muted">Tidak ada teman yang online.</span>`;
     const kini = new Date(); const ultah = semua.filter((p) => p.birthdate).map((p) => ({ p, jarak: jarakUltah(p.birthdate, kini) })).filter((x) => x.jarak >= 0 && x.jarak <= 30).sort((a, b) => a.jarak - b.jarak);
     $("panelUltah").innerHTML = ultah.length
-      ? ultah.map((x) => `<div style="margin-bottom:6px">🎂 <b>${esc(x.p.display_name)}</b> — ${x.jarak === 0 ? "HARI INI!" : "dalam " + x.jarak + " hari"} (${tglIndo(x.p.birthdate)})</div>`).join("")
+      ? ultah.map((x) => `<div style="margin-bottom:6px">🎂 <b>${esc(x.p.display_name)}</b> — ${x.jarak === 0 ? "HARI INI!" : "dalam " + x.jarak + " hari"} (${tglUltah(x.p.birthdate)})</div>`).join("")
       : `<span class="muted">Tidak ada ulang tahun dalam 30 hari ke depan.</span>`;
     const pokes = await ambilPokeMasuk();
     $("panelPoke").innerHTML = pokes.length
@@ -1058,7 +1059,7 @@ async function renderProfil(t, userId){
     </div>
     <div id="formProfil" style="display:none;margin-top:12px">
       <div class="field"><label>Nama tampilan</label><input id="editNama" value="${esc(p.display_name)}"></div>
-      <div class="field"><label>Bio</label><textarea id="editBio">${esc(p.bio || "")}</textarea></div>
+      <div class="field"><label>Bio</label><textarea id="editBio" maxlength="200">${esc(p.bio || "")}</textarea></div>
       <div class="field"><label>Tanggal lahir</label><input id="editTgl" type="date" value="${p.birthdate || ""}"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"><button type="button" class="tombol kecil abu" onclick="pilihFoto('profil')">📷 Ganti Foto Profil</button><button type="button" class="tombol kecil abu" onclick="pilihFoto('sampul')">🖼️ Ganti Foto Sampul</button></div>
       <button class="tombol kecil" onclick="simpanProfilUI()">Simpan</button>
@@ -1094,6 +1095,7 @@ async function simpanProfilUI(){
   const bio = ($("editBio").value || "").trim();
   const tgl = $("editTgl").value || null;
   if (nama.length < 2 || nama.length > 32) { alert("Nama tampilan 2–32 karakter."); return; }
+  if (bio.length > 200) { alert("Bio maksimal 200 karakter."); return; }
   if (mode === "local") {
     const d = dbLokal(); const u = d.users.find((x) => x.id === me.id);
     if (u) { u.display_name = nama; u.bio = bio; u.birthdate = tgl; simpanLokal(d); me = profilLokal(u); }

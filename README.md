@@ -5,6 +5,7 @@ Jejaring sosial nostalgia ala Facebook 2009, tersambung ke Supabase supaya akun 
 - **Situs live:** `https://tulus-kn.github.io/humba/`
 - **Repo:** `https://github.com/tulus-kn/humba`
 - **Backend:** Supabase proyek `tulus-kn's Project` (`https://ubuqxmxkseoslxzruugr.supabase.co`) — proyek yang sama dengan Pos-El dan Andi Kore.
+- **Lisensi:** MIT (lihat file `LICENSE`).
 
 ## Fitur
 
@@ -47,6 +48,8 @@ Jejaring sosial nostalgia ala Facebook 2009, tersambung ke Supabase supaya akun 
 
 7. **Mengaktifkan foto & video di status (supaya tersimpan antar HP): SQL Editor → New query → tempel seluruh isi file `supabase/migrasi-foto-video-status.sql` → Run.** File ini hanya menambah dua kolom (`image_url`, `video_url`) di tabel `humba_posts` dan melonggarkan aturan supaya status boleh hanya foto/video tanpa teks. Tanpa langkah ini, status berfoto/video tetap jalan dalam Mode Lokal, tapi di cloud gagal dengan pesan migrasi — aplikasi tidak crash.
 
+8. **Mengaktifkan batasan teks & edit sendiri (satu kali): SQL Editor → New query → tempel seluruh isi file `supabase/migrasi-batasan-dan-edit.sql` → Run.** Menambah batasan nama tampilan 2–32 karakter dan bio maks. 200 karakter di database, plus policy UPDATE supaya pengguna bisa mengedit status, komentar, grup, dan kiriman grup miliknya sendiri (tombol Edit di aplikasi belum dibuat).
+
 ## Cara pakai (pengguna)
 
 1. Buka `https://tulus-kn.github.io/humba/`.
@@ -59,3 +62,4 @@ Jejaring sosial nostalgia ala Facebook 2009, tersambung ke Supabase supaya akun 
 - Sinkron antar HP **belum teruji end-to-end dari server pembuat** (domain `*.supabase.co` diblokir dari sana). Uji penentunya: daftar 2 akun berbeda di 2 HP, tambah teman, kirim pesan, dan tulis status — semuanya harus muncul di HP satunya.
 - Online dihitung dari `last_seen` (diperbarui tiap 60 detik selama aplikasi terbuka; offline setelah ~2 menit tidak aktif).
 - Ganti password bisa dari Pengaturan → Keamanan Akun. Yang tidak ada hanya **lupa password** (tidak ada reset lewat email): kalau lupa, reset lewat dashboard Supabase → Authentication → Users.
+- Setiap push ke `main` diperiksa otomatis oleh GitHub Actions (`.github/workflows/check.yml`): sintaks JavaScript di `index.html` harus lolos `node --check`.

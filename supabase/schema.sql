@@ -42,7 +42,9 @@ create table if not exists public.humba_profiles (
   avatar_color text not null default '#d35400',
   last_seen timestamptz,
   created_at timestamptz not null default now(),
-  constraint humba_profiles_username_chk check (username ~ '^[a-z0-9._]{3,20}$')
+  constraint humba_profiles_username_chk check (username ~ '^[a-z0-9._]{3,20}$'),
+  constraint humba_profiles_nama_chk check (char_length(display_name) between 2 and 32),
+  constraint humba_profiles_bio_chk check (char_length(bio) <= 200)
 );
 
 -- ---------- Tabel status Kabar Beranda ----------
@@ -196,6 +198,9 @@ create policy "humba_posts_insert_own" on public.humba_posts
 drop policy if exists "humba_posts_delete_own" on public.humba_posts;
 create policy "humba_posts_delete_own" on public.humba_posts
   for delete to authenticated using (user_id = auth.uid() or wall_user_id = auth.uid());
+drop policy if exists "humba_posts_update_own" on public.humba_posts;
+create policy "humba_posts_update_own" on public.humba_posts
+  for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
 
 -- Komentar: dibaca semua; tulis sebagai diri sendiri;
 -- hapus hanya komentar sendiri atau komentar di status sendiri.
@@ -211,6 +216,9 @@ create policy "humba_comments_delete_own" on public.humba_comments
     user_id = auth.uid()
     or exists (select 1 from public.humba_posts p where p.id = humba_comments.post_id and p.user_id = auth.uid())
   );
+drop policy if exists "humba_comments_update_own" on public.humba_comments;
+create policy "humba_comments_update_own" on public.humba_comments
+  for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
 
 -- Suka: dibaca semua; tambah/hapus hanya sebagai diri sendiri.
 drop policy if exists "humba_likes_select_all" on public.humba_likes;
@@ -255,6 +263,9 @@ create policy "humba_groups_select_all" on public.humba_groups
 drop policy if exists "humba_groups_insert_creator" on public.humba_groups;
 create policy "humba_groups_insert_creator" on public.humba_groups
   for insert to authenticated with check (created_by = auth.uid());
+drop policy if exists "humba_groups_update_creator" on public.humba_groups;
+create policy "humba_groups_update_creator" on public.humba_groups
+  for update to authenticated using (created_by = auth.uid()) with check (created_by = auth.uid());
 
 -- Anggota grup: semua boleh membaca daftar anggota; gabung
 -- hanya sebagai diri sendiri.
@@ -284,6 +295,9 @@ create policy "humba_group_posts_insert_member" on public.humba_group_posts
 drop policy if exists "humba_group_posts_delete_own" on public.humba_group_posts;
 create policy "humba_group_posts_delete_own" on public.humba_group_posts
   for delete to authenticated using (user_id = auth.uid());
+drop policy if exists "humba_group_posts_update_own" on public.humba_group_posts;
+create policy "humba_group_posts_update_own" on public.humba_group_posts
+  for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
 
 -- Catatan (Notes): catatan pribadi hanya pemiliknya; catatan
 -- publik (is_public) dibaca semua user login.
