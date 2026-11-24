@@ -779,6 +779,14 @@ async function hapusStatus(id){
   if (mode === "local") { const d = dbLokal(); d.posts = d.posts.filter((p) => p.id !== id); d.comments = d.comments.filter((c) => c.post_id !== id); d.likes = d.likes.filter((l) => l.post_id !== id); simpanLokal(d); return; }
   await sb.from("humba_posts").delete().eq("id", id);
 }
+async function editStatus(id, body){
+  if (mode === "local") { const d = dbLokal(); const p = d.posts.find((x) => x.id === id); if (p) { p.body = body; simpanLokal(d); } return; }
+  await sb.from("humba_posts").update({ body }).eq("id", id);
+}
+async function editKomentar(id, body){
+  if (mode === "local") { const d = dbLokal(); const k = d.comments.find((x) => x.id === id); if (k) { k.body = body; simpanLokal(d); } return; }
+  await sb.from("humba_comments").update({ body }).eq("id", id);
+}
 async function ambilKomentar(postId){
   if (mode === "local") return dbLokal().comments.filter((c) => c.post_id === postId).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
   const { data } = await sb.from("humba_comments").select("*").eq("post_id", postId).order("created_at");
@@ -1052,16 +1060,16 @@ async function renderDetail(t){
     <div class="feed-kepala" style="margin-top:10px">${avatarHtml(pemilik)}
       <div class="info"><a href="#" class="nama" onclick="lihatProfil('${p.user_id}');return false">${esc(pemilik.display_name)}</a>
       <div class="sub">${waktuRelatif(p.created_at)}</div></div>
-      ${p.user_id === me.id ? `<button class="tombol kecil abu" onclick="hapusStatusUI('${p.id}')">Hapus</button>` : ""}
+      ${p.user_id === me.id ? `<button class="tombol kecil" onclick="mulaiEditStatus('${p.id}')">Ubah</button> <button class="tombol kecil abu" onclick="hapusStatusUI('${p.id}')">Hapus</button>` : ""}
     </div>
-    <div class="status"><div class="teks">${esc(p.body)}</div>${mediaPostHTML(p)}</div>
+    <div class="status"><div class="teks" id="teksStatus-${p.id}">${esc(p.body)}</div>${mediaPostHTML(p)}</div>
     <div class="aksi">
       <button class="${sayaSuka ? "suka-aktif" : ""}" onclick="sukaUI('${p.id}')">${ikonSuka(sayaSuka)}<span>Suka ${suka.length}</span></button>
       <button onclick="fokusKomen('${p.id}')">${ikonKomen()}<span>Komentar ${komen.length}</span></button>
       <button onclick="toggleSimpan('${p.id}')">${sudahSimpan(p.id) ? "★ Tersimpan" : "☆ Simpan"}</button>
     </div>
     <div id="komen-${p.id}">
-      ${komen.map((k) => { const kp = semua[k.user_id] || { display_name: "?", avatar_color: "#888" }; return `<div class="komentar"><b>${esc(kp.display_name)}</b> <span class="muted">${waktuRelatif(k.created_at)}</span><div class="teks">${esc(k.body)}</div></div>`; }).join("") || `<p class="muted" style="margin-top:8px">Belum ada komentar.</p>`}
+      ${komen.map((k) => { const kp = semua[k.user_id] || { display_name: "?", avatar_color: "#888" }; return `<div class="komentar"><b>${esc(kp.display_name)}</b> <span class="muted">${waktuRelatif(k.created_at)}</span>${k.user_id === me.id ? ` <button class="tombol kecil abu" onclick="mulaiEditKomen('${k.id}')">Ubah</button>` : ""}<div class="teks" id="teksKomen-${k.id}">${esc(k.body)}</div></div>`; }).join("") || `<p class="muted" style="margin-top:8px">Belum ada komentar.</p>`}
     </div>
     <div class="komen-form"><input id="inKomen-${p.id}" placeholder="Tulis komentar…" maxlength="500" onkeydown="if(event.key==='Enter')kirimKomenUI('${p.id}')"><button onclick="kirimKomenUI('${p.id}')">Kirim</button></div>
   </div>`;
@@ -1069,6 +1077,39 @@ async function renderDetail(t){
 }
 
 async function hapusStatusUI(id){ if (!confirm("Hapus status ini?")) return; await hapusStatus(id); tampil(view === "detail" ? "beranda" : view); }
+function mulaiEditStatus(id){
+  const el = $("teksStatus-" + id);
+  if (!el) return;
+  const lama = el.textContent;
+  el.innerHTML = `<textarea id="editStatus-${id}" maxlength="2000" style="width:100%;min-height:80px">${esc(lama)}</textarea><div style="margin-top:6px;display:flex;gap:8px"><button class="tombol kecil" onclick="simpanEditStatus('${id}')">Simpan</button><button class="tombol kecil abu" onclick="tampil(view)">Batal</button></div>`;
+  const ta = $("editStatus-" + id); if (ta) ta.focus();
+}
+async function simpanEditStatus(id){
+  const el = $("editStatus-" + id);
+  const baru = (el.value || "").trim();
+  if (baru.length > 2000) { alert("Status maksimal 2000 karakter."); return; }
+  const semua = await ambilPostingan(null);
+  const p = semua.find((x) => x.id === id);
+  if (!p) { tampil(view); return; }
+  if (!baru && !p.image_url && !p.video_url) { alert("Status tidak boleh kosong kalau tidak ada foto/video."); return; }
+  await editStatus(id, baru);
+  tampil(view);
+}
+function mulaiEditKomen(id){
+  const el = $("teksKomen-" + id);
+  if (!el) return;
+  const lama = el.textContent;
+  el.innerHTML = `<textarea id="editKomen-${id}" maxlength="500" style="width:100%;min-height:60px">${esc(lama)}</textarea><div style="margin-top:6px;display:flex;gap:8px"><button class="tombol kecil" onclick="simpanEditKomen('${id}')">Simpan</button><button class="tombol kecil abu" onclick="tampil(view)">Batal</button></div>`;
+  const ta = $("editKomen-" + id); if (ta) ta.focus();
+}
+async function simpanEditKomen(id){
+  const el = $("editKomen-" + id);
+  const baru = (el.value || "").trim();
+  if (!baru) { alert("Komentar tidak boleh kosong."); return; }
+  if (baru.length > 500) { alert("Komentar maksimal 500 karakter."); return; }
+  await editKomentar(id, baru);
+  tampil(view);
+}
 async function sukaUI(id){ await toggleSuka(id); tampil(view); }
 function fokusKomen(id){ const el = $("inKomen-" + id); if (el) el.focus(); }
 async function kirimKomenUI(id){ const el = $("inKomen-" + id); await kirimKomentar(id, el.value); tampil(view); }
@@ -1164,9 +1205,9 @@ async function renderProfil(t, userId){
     const div = document.createElement("div");
     div.className = "status";
     div.innerHTML = `
-      <div class="baris">${avatarHtml(pemilik, "kecil")}<div style="flex:1;min-width:0"><a href="#" class="nama" onclick="lihatProfil('${w.user_id}');return false">${esc(pemilik.display_name)}</a> <span class="muted">${waktuRelatif(w.created_at)}</span>${w.user_id === me.id || w.wall_user_id === me.id ? ` <button class="tombol kecil abu" onclick="hapusStatusUI('${w.id}')">Hapus</button>` : ""}<div class="teks">${esc(w.body)}</div>${mediaPostHTML(w)}
+      <div class="baris">${avatarHtml(pemilik, "kecil")}<div style="flex:1;min-width:0"><a href="#" class="nama" onclick="lihatProfil('${w.user_id}');return false">${esc(pemilik.display_name)}</a> <span class="muted">${waktuRelatif(w.created_at)}</span>${w.user_id === me.id ? ` <button class="tombol kecil" onclick="mulaiEditStatus('${w.id}')">Ubah</button>` : ""}${w.user_id === me.id || w.wall_user_id === me.id ? ` <button class="tombol kecil abu" onclick="hapusStatusUI('${w.id}')">Hapus</button>` : ""}<div class="teks" id="teksStatus-${w.id}">${esc(w.body)}</div>${mediaPostHTML(w)}
       <div class="aksi"><button class="${suka.some((s) => s.user_id === me.id) ? "suka-aktif" : ""}" onclick="sukaUI('${w.id}')">${ikonSuka(suka.some((s) => s.user_id === me.id))}<span>Suka ${suka.length}</span></button><button onclick="fokusKomen('${w.id}')">${ikonKomen()}<span>Komentar ${komen.length}</span></button></div>
-      <div id="komen-${w.id}">${komen.map((k) => { const kp = semua[k.user_id] || { display_name: "?", avatar_color: "#888" }; return `<div class="komentar"><b>${esc(kp.display_name)}</b> <span class="muted">${waktuRelatif(k.created_at)}</span><div class="teks">${esc(k.body)}</div></div>`; }).join("")}</div>
+      <div id="komen-${w.id}">${komen.map((k) => { const kp = semua[k.user_id] || { display_name: "?", avatar_color: "#888" }; return `<div class="komentar"><b>${esc(kp.display_name)}</b> <span class="muted">${waktuRelatif(k.created_at)}</span>${k.user_id === me.id ? ` <button class="tombol kecil abu" onclick="mulaiEditKomen('${k.id}')">Ubah</button>` : ""}<div class="teks" id="teksKomen-${k.id}">${esc(k.body)}</div></div>`; }).join("")}</div>
       <div class="komen-form"><input id="inKomen-${w.id}" placeholder="Tulis komentar…" maxlength="500" onkeydown="if(event.key==='Enter')kirimKomenUI('${w.id}')"><button onclick="kirimKomenUI('${w.id}')">Kirim</button></div>
       </div></div>`;
     $("daftarWall").appendChild(div);
