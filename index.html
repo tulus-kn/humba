@@ -423,6 +423,7 @@ details.supabase input{background:#26262b;color:var(--teks);border-color:#3a3a40
 /* ---------- Bantuan ---------- */
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const urlCss = (u) => esc(String(u ?? "").replace(/['"()\\\s<>]/g, (c) => "%" + c.charCodeAt(0).toString(16).padStart(2, "0")));
 const WARNA_AVATAR = ["#ff5a72","#ff8a4c","#3ec08a","#4a90e2","#8e6ce8","#e2596e","#2bb3a3","#7a8aa0"];
 const warnaAvatar = (nama) => { let h = 0; for (const c of String(nama)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return WARNA_AVATAR[h % WARNA_AVATAR.length]; };
 const IKON = (d, aktif) => `<svg viewBox="0 0 24 24" fill="${aktif ? "currentColor" : "none"}" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
@@ -850,8 +851,6 @@ function jarakUltah(birthdate, kini){
   return jarak;
 }
 async function pokeDariPanel(id){ const p = await profilDariId(id); await kirimPoke(id, p ? p.display_name : "teman"); renderPanelKanan(); }
-// Gaya sampul yang aman: hanya data:image/* yang dipakai, karakter berbahaya dibuang.
-function gayaSampul(u){ if (!u || typeof u !== "string" || !u.startsWith("data:image/")) return ""; return `background-image:url("${u.replace(/["'()\\]/g, "")}")`; }
 async function lihatProfil(id){ profilLihat = id; tampil("profil"); }
 function tulisCepat(){ tampil("beranda").then(() => { const el = $("inStatus"); if (el) { el.focus(); el.scrollIntoView({ block: "center", behavior: "smooth" }); } }); }
 
@@ -1042,8 +1041,8 @@ async function renderProfil(t, userId){
   t.innerHTML = `
   <div class="kartu">
     ${saya
-      ? `<div class="sampul ${p.cover_url ? "" : "kosong"}" ${p.cover_url ? `style="${gayaSampul(p.cover_url)}"` : ""} onclick="pilihFoto('sampul')">${p.cover_url ? `<button class="ganti-sampul" onclick="event.stopPropagation();pilihFoto('sampul')">📷 Ganti Sampul</button>` : `<span>📷 Ketuk untuk pasang foto sampul</span>`}</div>`
-      : (p.cover_url ? `<div class="sampul" style="${gayaSampul(p.cover_url)}"></div>` : "")}
+      ? `<div class="sampul ${p.cover_url ? "" : "kosong"}" ${p.cover_url ? `style="background-image:url('${urlCss(p.cover_url)}')"` : ""} onclick="pilihFoto('sampul')">${p.cover_url ? `<button class="ganti-sampul" onclick="event.stopPropagation();pilihFoto('sampul')">📷 Ganti Sampul</button>` : `<span>📷 Ketuk untuk pasang foto sampul</span>`}</div>`
+      : (p.cover_url ? `<div class="sampul" style="background-image:url('${urlCss(p.cover_url)}')"></div>` : "")}
     <div class="baris" style="margin-top:12px">${saya ? `<span class="foto-profil-wrap" onclick="pilihFoto('profil')" title="Ketuk untuk ganti foto profil">${avatarHtml(p, "besar")}<span class="lencana-kamera">📷</span></span>` : avatarHtml(p, "besar")}
       <div style="flex:1;min-width:0">
         <h2 style="margin-bottom:2px">${esc(p.display_name)}</h2>
@@ -1571,7 +1570,7 @@ async function renderSaya(t){
     disimpan: "Kamu belum menyimpan catatan apa pun."
   }[tabSaya];
   let html = `<div class="kartu">
-    <div class="sampul ${me.cover_url ? "" : "kosong"}" ${me.cover_url ? `style="${gayaSampul(me.cover_url)}"` : ""} onclick="pilihFoto('sampul')">${me.cover_url ? `<button class="ganti-sampul" onclick="event.stopPropagation();pilihFoto('sampul')">📷 Ganti Sampul</button>` : `<span>📷 Ketuk untuk pasang foto sampul</span>`}</div>
+    <div class="sampul ${me.cover_url ? "" : "kosong"}" ${me.cover_url ? `style="background-image:url('${urlCss(me.cover_url)}')"` : ""} onclick="pilihFoto('sampul')">${me.cover_url ? `<button class="ganti-sampul" onclick="event.stopPropagation();pilihFoto('sampul')">📷 Ganti Sampul</button>` : `<span>📷 Ketuk untuk pasang foto sampul</span>`}</div>
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-top:12px">
       <button class="tombol kecil abu" onclick="bukaDrawer(event)">☰ Menu</button>
       <button class="tombol kecil" onclick="tampil('profil')">Edit Profil</button>
