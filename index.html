@@ -548,7 +548,10 @@ function masukAplikasi(){
   profilLihat = me.id; grupBuka = null; chatDengan = null; catatanBuka = null;
   renderPanelProfil();
   langgananRealtime();
-  tampil("beranda");
+  let hal = "beranda";
+  try { hal = localStorage.getItem("ch.halaman") || "beranda"; } catch(e){}
+  if (!["beranda","teman","profil","grup","catatan","pesan"].includes(hal)) hal = "beranda";
+  tampil(hal);
 }
 function renderPanelProfil(){
   $("panelProfil").innerHTML = `<div class="baris-tengah">${avatarHtml(me, "besar")}<div><div class="nama">${esc(me.display_name)}</div><div class="muted">@${esc(me.username)}</div><div class="kecil" style="margin-top:4px">${me.bio ? esc(me.bio) : "Belum ada bio."}</div>${me.birthdate ? `<div class="kecil">🎂 ${tglIndo(me.birthdate)}</div>` : ""}</div></div><div style="margin-top:8px"><span class="chip">${mode === "cloud" ? "Supabase · tersambung" : "Mode lokal (demo)"}</span></div>`;
@@ -558,6 +561,7 @@ function setNavAktif(v){
 }
 async function tampil(v){
   view = v; setNavAktif(v);
+  try { localStorage.setItem("ch.halaman", v); } catch(e){}
   const t = $("tengah");
   try {
     if (v === "beranda") await renderBeranda(t);
