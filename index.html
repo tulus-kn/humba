@@ -853,7 +853,9 @@ function renderPanelProfil(){
 function setNavAktif(v){
   document.querySelectorAll("[data-v]").forEach((b) => b.classList.toggle("aktif", b.dataset.v === v));
 }
-async function tampil(v){
+async function tampil(v, opt){
+  const lama = view;
+  const tanpaDorong = opt && opt.tanpaDorong;
   view = v; setNavAktif(v);
   try { tutupDrawer(); } catch(e){}
   const tb = $("tabsAtas"); if (tb && v !== "beranda") tb.style.display = "none";
@@ -882,8 +884,63 @@ async function tampil(v){
     else if (v === "panduan") renderPanduan(t);
     else if (v === "tambah-teman") await renderTambahTeman(t);
   } catch(e){ t.innerHTML = `<div class="kartu"><div class="pesan-info merah">Gagal memuat: ${esc(e.message || e)}</div></div>`; }
+  if (!tanpaDorong) {
+    if (pertamaTampil) {
+      pertamaTampil = false;
+      try { history.replaceState({ view: v }, ""); } catch(e){}
+    } else if (v !== lama) {
+      try { history.pushState({ view: v }, ""); jumlahDorong++; } catch(e){}
+    }
+  }
+  if (v === "beranda") dorongPenjaga();
   window.scrollTo({ top: 0 });
 }
+
+/* ---------- Tombol kembali HP: kembali ke menu sebelumnya, tekan 2x untuk keluar ---------- */
+let pertamaTampil = true;
+let penjagaAda = false;
+let jumlahDorong = 0;
+let terakhirBack = 0;
+function dorongPenjaga(){
+  if (penjagaAda) return;
+  try { history.pushState({ penjaga: true, view: "beranda" }, ""); penjagaAda = true; } catch(e){}
+}
+function toastKeluar(){
+  let el = $("toastKeluar");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "toastKeluar";
+    el.style.cssText = "position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#333;color:#fff;padding:10px 18px;border-radius:999px;font-size:14px;z-index:300;box-shadow:0 2px 12px rgba(0,0,0,.4);display:none;white-space:nowrap";
+    document.body.appendChild(el);
+  }
+  el.textContent = "Tekan sekali lagi untuk keluar";
+  el.style.display = "block";
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.style.display = "none"; }, 2000);
+}
+function kembaliMenu(){
+  if (jumlahDorong > 0) { try { history.back(); return; } catch(e){} }
+  tampil("beranda");
+}
+window.addEventListener("popstate", (e) => {
+  const s = (e.state && typeof e.state === "object") ? e.state : {};
+  if (s.penjaga) {
+    penjagaAda = true;
+    if (s.view && s.view !== view) tampil(s.view, { tanpaDorong: true });
+    return;
+  }
+  if (s.view && s.view !== view) {
+    penjagaAda = false;
+    tampil(s.view, { tanpaDorong: true });
+    return;
+  }
+  const kini = Date.now();
+  if (kini - terakhirBack < 2000) return;
+  terakhirBack = kini;
+  penjagaAda = false;
+  toastKeluar();
+  setTimeout(() => { if (view === "beranda" && !penjagaAda) dorongPenjaga(); }, 2100);
+});
 function langgananRealtime(){
   if (mode !== "cloud" || !sb) return;
   try {
@@ -1057,14 +1114,14 @@ async function renderDetail(t){
   const tabs = $("tabsAtas"); if (tabs) tabs.style.display = "none";
   const semuaPost = await ambilPostingan(null);
   const p = semuaPost.find((x) => x.id === detailPostId);
-  if (!p) { t.innerHTML = `<div class="kartu"><button class="tombol kecil abu" onclick="tampil('beranda')">← Kembali</button><div class="pesan-info merah" style="margin-top:10px">Status tidak ditemukan (mungkin sudah dihapus).</div></div>`; return; }
+  if (!p) { t.innerHTML = `<div class="kartu"><button class="tombol kecil abu" onclick="kembaliMenu()">← Kembali</button><div class="pesan-info merah" style="margin-top:10px">Status tidak ditemukan (mungkin sudah dihapus).</div></div>`; return; }
   const pemilik = await profilDariId(p.user_id) || { display_name: "Pengguna", username: "?", avatar_color: "#888" };
   const suka = await hitungSuka(p.id);
   const sayaSuka = suka.some((s) => s.user_id === me.id);
   const komen = await ambilKomentar(p.id);
   const semua = {}; (await semuaProfil()).forEach((x) => semua[x.id] = x);
   t.innerHTML = `<div class="kartu feed">
-    <button class="tombol kecil abu" onclick="tampil('beranda')">← Kembali</button>
+    <button class="tombol kecil abu" onclick="kembaliMenu()">← Kembali</button>
     <div class="feed-kepala" style="margin-top:10px">${avatarHtml(pemilik)}
       <div class="info"><a href="#" class="nama" onclick="lihatProfil('${p.user_id}');return false">${esc(pemilik.display_name)}</a>
       <div class="sub">${waktuRelatif(p.created_at)}${p.visibility === "friends" ? " · 👥 Teman saja" : ""}</div></div>
