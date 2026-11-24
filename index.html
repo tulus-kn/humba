@@ -312,6 +312,10 @@ details.supabase input{background:#26262b;color:var(--teks);border-color:#3a3a40
 <div id="layarApp" style="display:none">
   <input type="file" id="inFotoProfil" accept="image/*" style="display:none" onchange="fotoDipilih(this,'profil')">
   <input type="file" id="inFotoSampul" accept="image/*" style="display:none" onchange="fotoDipilih(this,'sampul')">
+  <input type="file" id="inFotoStatus" accept="image/*" style="display:none" onchange="mediaStatusDipilih(this,'foto')">
+  <input type="file" id="inVideoStatus" accept="video/*" style="display:none" onchange="mediaStatusDipilih(this,'video')">
+  <input type="file" id="inKameraFoto" accept="image/*" capture="environment" style="display:none" onchange="mediaStatusDipilih(this,'foto')">
+  <input type="file" id="inKameraVideo" accept="video/*" capture="environment" style="display:none" onchange="mediaStatusDipilih(this,'video')">
   <div class="bingkai">
     <div class="atas">
       <div class="topbar">
@@ -395,8 +399,10 @@ details.supabase input{background:#26262b;color:var(--teks);border-color:#3a3a40
 </aside>
 <div id="sheetPlus" class="overlay" style="display:none" onclick="if(event.target===this)tutupLembarPlus()">
   <div class="sheet">
-    <button onclick="pilihAlbum()">🖼️ Pilih dari Album</button>
-    <button onclick="pilihKamera()">📷 Kamera</button>
+    <button onclick="pilihAlbum()">🖼️ Foto dari Album</button>
+    <button onclick="pilihAlbumVideo()">🎥 Video dari Album</button>
+    <button onclick="pilihKamera()">📷 Foto dengan Kamera</button>
+    <button onclick="pilihKameraVideo()">🎬 Video dengan Kamera</button>
     <button onclick="pilihTeks()">✏️ Teks</button>
     <hr style="margin:8px 0;border:0;border-top:1px solid #eee">
     <button onclick="pilihJualan()">🛍️ Jualan — Pasang Barang</button>
@@ -632,17 +638,56 @@ async function ambilPostingan(wallId){
   if (error) throw error;
   return data || [];
 }
-async function kirimStatus(teks, wallId){
+async function kirimStatus(teks, wallId, media){
   const body = (teks || "").trim();
-  if (!body) return "Tulis dulu statusnya.";
+  const m = media || null;
+  if (!body && !m) return "Tulis dulu statusnya atau pilih foto/video.";
   if (body.length > 2000) return "Status maksimal 2000 karakter.";
+  const image_url = m && m.jenis === "foto" ? m.dataUrl : null;
+  const video_url = m && m.jenis === "video" ? m.dataUrl : null;
   if (mode === "local") {
     const d = dbLokal();
-    d.posts.push({ id: uidBaru(), user_id: me.id, wall_user_id: wallId || null, body, created_at: sekarang() }); simpanLokal(d); return null;
+    try { d.posts.push({ id: uidBaru(), user_id: me.id, wall_user_id: wallId || null, body, image_url, video_url, created_at: sekarang() }); simpanLokal(d); } catch(e){ return "Gagal menyimpan status (penyimpanan HP penuh?). Coba video yang lebih kecil atau status teks saja."; }
+    return null;
   }
-  const { error } = await sb.from("humba_posts").insert({ user_id: me.id, wall_user_id: wallId || null, body });
-  return error ? error.message : null;
+  const { error } = await sb.from("humba_posts").insert({ user_id: me.id, wall_user_id: wallId || null, body, image_url, video_url });
+  if (error) {
+    if (String(error.message || "").includes("image_url") || String(error.message || "").includes("video_url")) return "Kolom foto/video belum ada di Supabase. Jalankan supabase/migrasi-foto-video-status.sql di SQL Editor Supabase dulu, lalu coba lagi.";
+    return error.message;
+  }
+  return null;
 }
+function mediaPostHTML(p){
+  if (p.image_url) return `<img src="${esc(p.image_url)}" alt="Foto status" style="width:100%;border-radius:12px;margin-top:8px">`;
+  if (p.video_url) return `<video src="${esc(p.video_url)}" controls preload="metadata" playsinline style="width:100%;border-radius:12px;margin-top:8px"></video>`;
+  return "";
+}
+let mediaStatus = null;
+async function mediaStatusDipilih(input, jenis){
+  const f = input.files && input.files[0];
+  input.value = "";
+  if (!f) return;
+  try {
+    if (jenis === "foto") {
+      if (!f.type || !f.type.startsWith("image/")) { alert("Pilih file gambar (JPG/PNG)."); return; }
+      mediaStatus = { jenis: "foto", dataUrl: await kompresFoto(f, 800, 800) };
+    } else {
+      if (!f.type || !f.type.startsWith("video/")) { alert("Pilih file video."); return; }
+      if (f.size > 8 * 1024 * 1024) { alert("Video maksimal 8 MB. Pilih video yang lebih pendek atau lebih kecil."); return; }
+      mediaStatus = { jenis: "video", dataUrl: await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(new Error("Video tidak bisa dibaca.")); r.readAsDataURL(f); }) };
+    }
+  } catch(e){ alert("Gagal memproses media: " + (e.message || e)); return; }
+  tabBeranda = "jelajah"; tampil("beranda").then(() => { tampilPreviewStatus(); const el = $("inStatus"); if (el) el.focus(); });
+}
+function tampilPreviewStatus(){
+  const w = $("previewStatus"); if (!w) return;
+  if (!mediaStatus) { w.innerHTML = ""; return; }
+  w.innerHTML = (mediaStatus.jenis === "foto"
+    ? `<img src="${esc(mediaStatus.dataUrl)}" style="width:100%;max-height:300px;object-fit:contain;border-radius:12px;margin-top:8px">`
+    : `<video src="${esc(mediaStatus.dataUrl)}" controls preload="metadata" playsinline style="width:100%;max-height:300px;border-radius:12px;margin-top:8px"></video>`)
+    + `<div style="margin-top:6px"><button class="tombol kecil abu" onclick="hapusMediaStatus()">Hapus ${mediaStatus.jenis === "foto" ? "foto" : "video"}</button></div>`;
+}
+function hapusMediaStatus(){ mediaStatus = null; tampilPreviewStatus(); }
 async function hapusStatus(id){
   if (mode === "local") { const d = dbLokal(); d.posts = d.posts.filter((p) => p.id !== id); d.comments = d.comments.filter((c) => c.post_id !== id); d.likes = d.likes.filter((l) => l.post_id !== id); simpanLokal(d); return; }
   await sb.from("humba_posts").delete().eq("id", id);
@@ -820,7 +865,7 @@ async function gridStatusHTML(postingan){
     const pemilik = semua[p.user_id] || { display_name: "Pengguna", username: "?", avatar_color: "#888" };
     const suka = await hitungSuka(p.id);
     html += `<article class="kartu-mini" onclick="bukaDetail('${p.id}')">
-      <div class="mini-gambar" style="background:${warnaKartu(p.id)}"><span class="mini-teks">${esc((p.body || "").slice(0, 90))}${(p.body || "").length > 90 ? "…" : ""}</span></div>
+      <div class="mini-gambar" style="background:${warnaKartu(p.id)}">${p.image_url ? `<img src="${esc(p.image_url)}" style="width:100%;height:100%;object-fit:cover;display:block">` : p.video_url ? `<video src="${esc(p.video_url)}" preload="metadata" style="width:100%;height:100%;object-fit:cover;display:block"></video>` : `<span class="mini-teks">${esc((p.body || "").slice(0, 90))}${(p.body || "").length > 90 ? "…" : ""}</span>`}</div>
       <div class="mini-isi"><div class="mini-judul">${esc((p.body || "").slice(0, 60))}</div>
       <div class="mini-bawah">${avatarHtml(pemilik, "kecil")}<span class="mini-nama">${esc(pemilik.display_name)}</span><span class="mini-suka">♥ ${suka.length}</span></div></div></article>`;
   }
@@ -846,6 +891,7 @@ async function renderBeranda(t){
   const draft = muatDraft();
   let html = `<div class="kartu"><div class="komposer">
       <div class="baris" style="margin-bottom:8px">${avatarHtml(me)}<textarea id="inStatus" placeholder="Bagikan sesuatu, ${esc(me.display_name)}…" maxlength="2000">${esc(draft)}</textarea></div>
+      <div id="previewStatus"></div>
       <div class="kaki-komposer"><span class="muted">Terlihat oleh semua pengguna</span><div style="display:flex;align-items:center;gap:10px"><span class="muted" id="hitungStatus">${String(draft).length}/2000</span><button class="tombol kecil" onclick="bagikanStatus()">Bagikan</button></div></div>
     </div></div>`;
   const semuaPost = await ambilPostingan(null);
@@ -882,11 +928,12 @@ async function renderBeranda(t){
     $("hitungStatus").textContent = e.target.value.length + "/2000";
     try { localStorage.setItem("ch.draft", e.target.value); } catch(err){}
   });
-  renderPanelKanan(); hitungBelumDibaca();
+  renderPanelKanan(); hitungBelumDibaca(); tampilPreviewStatus();
 }
 async function bagikanStatus(){
-  const err = await kirimStatus($("inStatus").value, null);
+  const err = await kirimStatus($("inStatus").value, null, mediaStatus);
   if (err) { alert(err); return; }
+  mediaStatus = null;
   try { localStorage.removeItem("ch.draft"); } catch(e){}
   tampil("beranda");
 }
@@ -908,7 +955,7 @@ async function renderDetail(t){
       <div class="sub">${waktuRelatif(p.created_at)}</div></div>
       ${p.user_id === me.id ? `<button class="tombol kecil abu" onclick="hapusStatusUI('${p.id}')">Hapus</button>` : ""}
     </div>
-    <div class="status"><div class="teks">${esc(p.body)}</div></div>
+    <div class="status"><div class="teks">${esc(p.body)}</div>${mediaPostHTML(p)}</div>
     <div class="aksi">
       <button class="${sayaSuka ? "suka-aktif" : ""}" onclick="sukaUI('${p.id}')">${ikonSuka(sayaSuka)}<span>Suka ${suka.length}</span></button>
       <button onclick="fokusKomen('${p.id}')">${ikonKomen()}<span>Komentar ${komen.length}</span></button>
@@ -1018,7 +1065,7 @@ async function renderProfil(t, userId){
     const div = document.createElement("div");
     div.className = "status";
     div.innerHTML = `
-      <div class="baris">${avatarHtml(pemilik, "kecil")}<div style="flex:1;min-width:0"><a href="#" class="nama" onclick="lihatProfil('${w.user_id}');return false">${esc(pemilik.display_name)}</a> <span class="muted">${waktuRelatif(w.created_at)}</span>${w.user_id === me.id || w.wall_user_id === me.id ? ` <button class="tombol kecil abu" onclick="hapusStatusUI('${w.id}')">Hapus</button>` : ""}<div class="teks">${esc(w.body)}</div>
+      <div class="baris">${avatarHtml(pemilik, "kecil")}<div style="flex:1;min-width:0"><a href="#" class="nama" onclick="lihatProfil('${w.user_id}');return false">${esc(pemilik.display_name)}</a> <span class="muted">${waktuRelatif(w.created_at)}</span>${w.user_id === me.id || w.wall_user_id === me.id ? ` <button class="tombol kecil abu" onclick="hapusStatusUI('${w.id}')">Hapus</button>` : ""}<div class="teks">${esc(w.body)}</div>${mediaPostHTML(w)}
       <div class="aksi"><button class="${suka.some((s) => s.user_id === me.id) ? "suka-aktif" : ""}" onclick="sukaUI('${w.id}')">${ikonSuka(suka.some((s) => s.user_id === me.id))}<span>Suka ${suka.length}</span></button><button onclick="fokusKomen('${w.id}')">${ikonKomen()}<span>Komentar ${komen.length}</span></button></div>
       <div id="komen-${w.id}">${komen.map((k) => { const kp = semua[k.user_id] || { display_name: "?", avatar_color: "#888" }; return `<div class="komentar"><b>${esc(kp.display_name)}</b> <span class="muted">${waktuRelatif(k.created_at)}</span><div class="teks">${esc(k.body)}</div></div>`; }).join("")}</div>
       <div class="komen-form"><input id="inKomen-${w.id}" placeholder="Tulis komentar…" maxlength="500" onkeydown="if(event.key==='Enter')kirimKomenUI('${w.id}')"><button onclick="kirimKomenUI('${w.id}')">Kirim</button></div>
@@ -1359,8 +1406,10 @@ function tutupDrawer(){ const o = $("drawerOverlay"), d = $("drawer"); if (o) o.
 function bukaLembarPlus(){ $("sheetPlus").style.display = "block"; }
 function tutupLembarPlus(){ $("sheetPlus").style.display = "none"; }
 function pilihTeks(){ tutupLembarPlus(); tabBeranda = "jelajah"; tampil("beranda").then(() => { const el = $("inStatus"); if (el) el.focus(); }); }
-function pilihAlbum(){ tutupLembarPlus(); alert("Foto belum bisa diunggah untuk status — status berupa teks saja."); tabBeranda = "jelajah"; tampil("beranda").then(() => { const el = $("inStatus"); if (el) el.focus(); }); }
-function pilihKamera(){ tutupLembarPlus(); alert("Foto belum bisa diunggah untuk status — status berupa teks saja."); tabBeranda = "jelajah"; tampil("beranda").then(() => { const el = $("inStatus"); if (el) el.focus(); }); }
+function pilihAlbum(){ tutupLembarPlus(); const el = $("inFotoStatus"); if (el) el.click(); }
+function pilihAlbumVideo(){ tutupLembarPlus(); const el = $("inVideoStatus"); if (el) el.click(); }
+function pilihKamera(){ tutupLembarPlus(); const el = $("inKameraFoto"); if (el) el.click(); }
+function pilihKameraVideo(){ tutupLembarPlus(); const el = $("inKameraVideo"); if (el) el.click(); }
 function pilihJualan(){ tutupLembarPlus(); tampil("jual"); }
 
 /* ---------- Toko (Market) ---------- */
