@@ -51,7 +51,9 @@ Jejaring sosial nostalgia ala Facebook 2009, tersambung ke Supabase supaya akun 
 8. **Mengaktifkan batasan teks & edit sendiri (satu kali): SQL Editor → New query → tempel seluruh isi file `supabase/migrasi-batasan-dan-edit.sql` → Run.** Menambah batasan nama tampilan 2–32 karakter dan bio maks. 200 karakter di database, plus policy UPDATE supaya pengguna bisa mengedit status, komentar, grup, dan kiriman grup miliknya sendiri (tombol Ubah di aplikasi sudah ada untuk status dan komentar; grup dan kiriman grup menyusul).
 9. **Mengaktifkan reset password pakai kode pemulihan (satu kali): SQL Editor → New query → tempel seluruh isi file `supabase/migrasi-reset-password.sql` → Run.** Menambah kolom `rc_hash` di `humba_profiles` dan dua fungsi database (`humba_reset_password`, `humba_ganti_kode`). Saat daftar, aplikasi membuat kode `HUMBA-XXXX-XXXX` dan hanya menyimpan hash-nya — kode aslinya tidak pernah disimpan. Kalau lupa password, klik "Lupa Password?" di halaman masuk, masukkan username + kode + password baru. 5x kode salah = blokir 15 menit. Akun lama yang dibuat sebelum fitur ini tidak punya kode — reset manual lewat dashboard Supabase.
 
-**Jalan pintas:** langkah 4–9 sudah digabung dalam **satu file `supabase/migrasi-semua.sql`** — tempel file itu saja, tidak perlu tempel satu-satu.
+10. **Mengaktifkan visibility per postingan (satu kali): SQL Editor → New query → tempel seluruh isi file `supabase/migrasi-visibility.sql` → Run.** Menambah kolom `visibility` (`public`/`friends`, default `public`) di `humba_posts` dan mengubah policy SELECT supaya status "Teman saja" hanya bisa dibaca penulisnya dan teman-temannya. Tanpa langkah ini, status baru gagal terkirim di cloud dengan pesan migrasi — aplikasi tidak crash.
+
+**Jalan pintas:** langkah 4–10 sudah digabung dalam **satu file `supabase/migrasi-semua.sql`** — tempel file itu saja, tidak perlu tempel satu-satu.
 
 ## Cara pakai (pengguna)
 

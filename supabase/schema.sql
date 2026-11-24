@@ -53,8 +53,10 @@ create table if not exists public.humba_posts (
   user_id uuid not null references public.humba_profiles (id) on delete cascade,
   wall_user_id uuid references public.humba_profiles (id) on delete cascade,
   body text not null,
+  visibility text not null default 'public',
   created_at timestamptz not null default now(),
-  constraint humba_posts_body_chk check (char_length(body) between 1 and 2000)
+  constraint humba_posts_body_chk check (char_length(body) between 1 and 2000),
+  constraint humba_posts_visibility_chk check (visibility in ('public', 'friends'))
 );
 create index if not exists humba_posts_user_idx on public.humba_posts (user_id, created_at desc);
 create index if not exists humba_posts_wall_idx on public.humba_posts (wall_user_id, created_at desc);
@@ -184,7 +186,13 @@ create policy "humba_profiles_update_own" on public.humba_profiles
 -- hanya status sendiri (atau status di dinding sendiri).
 drop policy if exists "humba_posts_select_all" on public.humba_posts;
 create policy "humba_posts_select_all" on public.humba_posts
-  for select to authenticated using (true);
+  for select to authenticated using (
+    visibility = 'public'
+    or user_id = auth.uid()
+    or exists (select 1 from public.humba_friends f where f.status = 'accepted'
+      and ((f.requester_id = auth.uid() and f.addressee_id = humba_posts.user_id)
+        or (f.requester_id = humba_posts.user_id and f.addressee_id = auth.uid())))
+  );
 drop policy if exists "humba_posts_insert_own" on public.humba_posts;
 create policy "humba_posts_insert_own" on public.humba_posts
   for insert to authenticated with check (
@@ -210,7 +218,7 @@ create policy "humba_posts_update_own" on public.humba_posts
           or (f.requester_id = wall_user_id and f.addressee_id = auth.uid()))))
   );
 revoke update on public.humba_posts from authenticated;
-grant update (body, image_url, video_url) on public.humba_posts to authenticated;
+grant update (body, image_url, video_url, visibility) on public.humba_posts to authenticated;
 
 -- Komentar: dibaca semua; tulis sebagai diri sendiri;
 -- hapus hanya komentar sendiri atau komentar di status sendiri.

@@ -84,6 +84,7 @@ input,textarea,select{font-family:inherit;font-size:15px;color:inherit}
 .komposer textarea{width:100%;min-height:70px;padding:12px;border:0;background:#f6f6f9;border-radius:12px;resize:vertical;outline:none;font-size:15px;line-height:1.55}
 .komposer textarea:focus{background:#f1f1f5}
 .kaki-komposer{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}
+.pilih-visibilitas{padding:7px 10px;border:1px solid var(--garis);background:var(--kartu);border-radius:999px;outline:none;font-size:13px;color:var(--teks);max-width:200px}
 
 /* ================= Tombol ================= */
 .tombol{background:var(--merah);color:#fff;border:0;border-radius:999px;padding:9px 18px;font-weight:700;font-size:14px;transition:background .15s}
@@ -713,7 +714,9 @@ async function jawabTeman(id, terima){
 async function ambilPostingan(wallId){
   if (mode === "local") {
     const d = dbLokal();
-    let list = d.posts.slice().sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    const temanIds = await temanDiterima();
+    const bolehLihat = (p) => !p.visibility || p.visibility === "public" || p.user_id === me.id || temanIds.includes(p.user_id);
+    let list = d.posts.slice().sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).filter(bolehLihat);
     if (wallId) list = list.filter((p) => p.wall_user_id === wallId || (p.user_id === wallId && !p.wall_user_id));
     else list = list.filter((p) => !p.wall_user_id);
     return list.slice(0, 50);
@@ -725,20 +728,22 @@ async function ambilPostingan(wallId){
   if (error) throw error;
   return data || [];
 }
-async function kirimStatus(teks, wallId, media){
+async function kirimStatus(teks, wallId, media, visibility){
   const body = (teks || "").trim();
   const m = media || null;
+  const vis = visibility === "friends" ? "friends" : "public";
   if (!body && !m) return "Tulis dulu statusnya atau pilih foto/video.";
   if (body.length > 2000) return "Status maksimal 2000 karakter.";
   const image_url = m && m.jenis === "foto" ? m.dataUrl : null;
   const video_url = m && m.jenis === "video" ? m.dataUrl : null;
   if (mode === "local") {
     const d = dbLokal();
-    try { d.posts.push({ id: uidBaru(), user_id: me.id, wall_user_id: wallId || null, body, image_url, video_url, created_at: sekarang() }); simpanLokal(d); } catch(e){ return "Gagal menyimpan status (penyimpanan HP penuh?). Coba video yang lebih kecil atau status teks saja."; }
+    try { d.posts.push({ id: uidBaru(), user_id: me.id, wall_user_id: wallId || null, body, image_url, video_url, visibility: vis, created_at: sekarang() }); simpanLokal(d); } catch(e){ return "Gagal menyimpan status (penyimpanan HP penuh?). Coba video yang lebih kecil atau status teks saja."; }
     return null;
   }
-  const { error } = await sb.from("humba_posts").insert({ user_id: me.id, wall_user_id: wallId || null, body, image_url, video_url });
+  const { error } = await sb.from("humba_posts").insert({ user_id: me.id, wall_user_id: wallId || null, body, image_url, video_url, visibility: vis });
   if (error) {
+    if (String(error.message || "").includes("visibility")) return "Kolom visibility belum ada di Supabase. Jalankan supabase/migrasi-visibility.sql di SQL Editor Supabase.";
     if (String(error.message || "").includes("image_url") || String(error.message || "").includes("video_url")) return "Kolom foto/video belum ada di Supabase. Jalankan supabase/migrasi-foto-video-status.sql di SQL Editor Supabase dulu, lalu coba lagi.";
     return error.message;
   }
@@ -779,9 +784,11 @@ async function hapusStatus(id){
   if (mode === "local") { const d = dbLokal(); d.posts = d.posts.filter((p) => p.id !== id); d.comments = d.comments.filter((c) => c.post_id !== id); d.likes = d.likes.filter((l) => l.post_id !== id); simpanLokal(d); return; }
   await sb.from("humba_posts").delete().eq("id", id);
 }
-async function editStatus(id, body){
-  if (mode === "local") { const d = dbLokal(); const p = d.posts.find((x) => x.id === id); if (p) { p.body = body; simpanLokal(d); } return; }
-  await sb.from("humba_posts").update({ body }).eq("id", id);
+async function editStatus(id, body, visibility){
+  const patch = { body };
+  if (visibility === "public" || visibility === "friends") patch.visibility = visibility;
+  if (mode === "local") { const d = dbLokal(); const p = d.posts.find((x) => x.id === id); if (p) { Object.assign(p, patch); simpanLokal(d); } return; }
+  await sb.from("humba_posts").update(patch).eq("id", id);
 }
 async function editKomentar(id, body){
   if (mode === "local") { const d = dbLokal(); const k = d.comments.find((x) => x.id === id); if (k) { k.body = body; simpanLokal(d); } return; }
@@ -974,7 +981,7 @@ async function gridStatusHTML(postingan){
     html += `<article class="kartu-mini" onclick="bukaDetail('${p.id}')">
       <div class="mini-gambar" style="background:${warnaKartu(p.id)}">${p.image_url ? `<img src="${esc(p.image_url)}" style="width:100%;height:100%;object-fit:cover;display:block">` : p.video_url ? `<video src="${esc(p.video_url)}" preload="metadata" style="width:100%;height:100%;object-fit:cover;display:block"></video>` : `<span class="mini-teks">${esc((p.body || "").slice(0, 90))}${(p.body || "").length > 90 ? "…" : ""}</span>`}</div>
       <div class="mini-isi"><div class="mini-judul">${esc((p.body || "").slice(0, 60))}</div>
-      <div class="mini-bawah">${avatarHtml(pemilik, "kecil")}<span class="mini-nama">${esc(pemilik.display_name)}</span><span class="mini-suka">♥ ${suka.length}</span></div></div></article>`;
+      <div class="mini-bawah">${avatarHtml(pemilik, "kecil")}<span class="mini-nama">${esc(pemilik.display_name)}</span>${p.visibility === "friends" ? `<span class="mini-suka">👥 Teman saja</span>` : ""}<span class="mini-suka">♥ ${suka.length}</span></div></div></article>`;
   }
   return html + `</div>`;
 }
@@ -999,7 +1006,7 @@ async function renderBeranda(t){
   let html = `<div class="kartu"><div class="komposer">
       <div class="baris" style="margin-bottom:8px">${avatarHtml(me)}<textarea id="inStatus" placeholder="Bagikan sesuatu, ${esc(me.display_name)}…" maxlength="2000">${esc(draft)}</textarea></div>
       <div id="previewStatus"></div>
-      <div class="kaki-komposer"><span class="muted">Terlihat oleh semua pengguna</span><div style="display:flex;align-items:center;gap:10px"><span class="muted" id="hitungStatus">${String(draft).length}/2000</span><button class="tombol kecil" onclick="bagikanStatus()">Bagikan</button></div></div>
+      <div class="kaki-komposer"><select id="inVisibility" class="pilih-visibilitas"><option value="public">🌍 Publik — semua pengguna</option><option value="friends">👥 Teman saja</option></select><div style="display:flex;align-items:center;gap:10px"><span class="muted" id="hitungStatus">${String(draft).length}/2000</span><button class="tombol kecil" onclick="bagikanStatus()">Bagikan</button></div></div>
     </div></div>`;
   const semuaPost = await ambilPostingan(null);
   if (tabBeranda === "mengikuti") {
@@ -1038,7 +1045,8 @@ async function renderBeranda(t){
   renderPanelKanan(); hitungBelumDibaca(); tampilPreviewStatus();
 }
 async function bagikanStatus(){
-  const err = await kirimStatus($("inStatus").value, null, mediaStatus);
+  const vis = ($("inVisibility") && $("inVisibility").value) || "public";
+  const err = await kirimStatus($("inStatus").value, null, mediaStatus, vis);
   if (err) { alert(err); return; }
   mediaStatus = null;
   try { localStorage.removeItem("ch.draft"); } catch(e){}
@@ -1059,8 +1067,8 @@ async function renderDetail(t){
     <button class="tombol kecil abu" onclick="tampil('beranda')">← Kembali</button>
     <div class="feed-kepala" style="margin-top:10px">${avatarHtml(pemilik)}
       <div class="info"><a href="#" class="nama" onclick="lihatProfil('${p.user_id}');return false">${esc(pemilik.display_name)}</a>
-      <div class="sub">${waktuRelatif(p.created_at)}</div></div>
-      ${p.user_id === me.id ? `<button class="tombol kecil" onclick="mulaiEditStatus('${p.id}')">Ubah</button> <button class="tombol kecil abu" onclick="hapusStatusUI('${p.id}')">Hapus</button>` : ""}
+      <div class="sub">${waktuRelatif(p.created_at)}${p.visibility === "friends" ? " · 👥 Teman saja" : ""}</div></div>
+      ${p.user_id === me.id ? `<button class="tombol kecil" onclick="mulaiEditStatus('${p.id}', '${p.visibility || "public"}', ${p.image_url || p.video_url ? "true" : "false"})">Ubah</button> <button class="tombol kecil abu" onclick="hapusStatusUI('${p.id}')">Hapus</button>` : ""}
     </div>
     <div class="status"><div class="teks" id="teksStatus-${p.id}">${esc(p.body)}</div>${mediaPostHTML(p)}</div>
     <div class="aksi">
@@ -1077,22 +1085,22 @@ async function renderDetail(t){
 }
 
 async function hapusStatusUI(id){ if (!confirm("Hapus status ini?")) return; await hapusStatus(id); tampil(view === "detail" ? "beranda" : view); }
-function mulaiEditStatus(id){
+function mulaiEditStatus(id, vis, punyaMedia){
   const el = $("teksStatus-" + id);
   if (!el) return;
   const lama = el.textContent;
-  el.innerHTML = `<textarea id="editStatus-${id}" maxlength="2000" style="width:100%;min-height:80px">${esc(lama)}</textarea><div style="margin-top:6px;display:flex;gap:8px"><button class="tombol kecil" onclick="simpanEditStatus('${id}')">Simpan</button><button class="tombol kecil abu" onclick="tampil(view)">Batal</button></div>`;
+  const v = vis === "friends" ? "friends" : "public";
+  el.innerHTML = `<textarea id="editStatus-${id}" maxlength="2000" style="width:100%;min-height:80px">${esc(lama)}</textarea><div style="margin-top:6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><select id="editVis-${id}" class="pilih-visibilitas"><option value="public"${v === "public" ? " selected" : ""}>🌍 Publik</option><option value="friends"${v === "friends" ? " selected" : ""}>👥 Teman saja</option></select><button class="tombol kecil" onclick="simpanEditStatus('${id}', ${punyaMedia ? "true" : "false"})">Simpan</button><button class="tombol kecil abu" onclick="tampil(view)">Batal</button></div>`;
   const ta = $("editStatus-" + id); if (ta) ta.focus();
 }
-async function simpanEditStatus(id){
+async function simpanEditStatus(id, punyaMedia){
   const el = $("editStatus-" + id);
   const baru = (el.value || "").trim();
   if (baru.length > 2000) { alert("Status maksimal 2000 karakter."); return; }
-  const semua = await ambilPostingan(null);
-  const p = semua.find((x) => x.id === id);
-  if (!p) { tampil(view); return; }
-  if (!baru && !p.image_url && !p.video_url) { alert("Status tidak boleh kosong kalau tidak ada foto/video."); return; }
-  await editStatus(id, baru);
+  if (!baru && !punyaMedia) { alert("Status tidak boleh kosong kalau tidak ada foto/video."); return; }
+  const visEl = $("editVis-" + id);
+  const vis = visEl ? visEl.value : "public";
+  await editStatus(id, baru, vis);
   tampil(view);
 }
 function mulaiEditKomen(id){
@@ -1205,7 +1213,7 @@ async function renderProfil(t, userId){
     const div = document.createElement("div");
     div.className = "status";
     div.innerHTML = `
-      <div class="baris">${avatarHtml(pemilik, "kecil")}<div style="flex:1;min-width:0"><a href="#" class="nama" onclick="lihatProfil('${w.user_id}');return false">${esc(pemilik.display_name)}</a> <span class="muted">${waktuRelatif(w.created_at)}</span>${w.user_id === me.id ? ` <button class="tombol kecil" onclick="mulaiEditStatus('${w.id}')">Ubah</button>` : ""}${w.user_id === me.id || w.wall_user_id === me.id ? ` <button class="tombol kecil abu" onclick="hapusStatusUI('${w.id}')">Hapus</button>` : ""}<div class="teks" id="teksStatus-${w.id}">${esc(w.body)}</div>${mediaPostHTML(w)}
+      <div class="baris">${avatarHtml(pemilik, "kecil")}<div style="flex:1;min-width:0"><a href="#" class="nama" onclick="lihatProfil('${w.user_id}');return false">${esc(pemilik.display_name)}</a> <span class="muted">${waktuRelatif(w.created_at)}${w.visibility === "friends" ? " · 👥 Teman saja" : ""}</span>${w.user_id === me.id ? ` <button class="tombol kecil" onclick="mulaiEditStatus('${w.id}', '${w.visibility || "public"}', ${w.image_url || w.video_url ? "true" : "false"})">Ubah</button>` : ""}${w.user_id === me.id || w.wall_user_id === me.id ? ` <button class="tombol kecil abu" onclick="hapusStatusUI('${w.id}')">Hapus</button>` : ""}<div class="teks" id="teksStatus-${w.id}">${esc(w.body)}</div>${mediaPostHTML(w)}
       <div class="aksi"><button class="${suka.some((s) => s.user_id === me.id) ? "suka-aktif" : ""}" onclick="sukaUI('${w.id}')">${ikonSuka(suka.some((s) => s.user_id === me.id))}<span>Suka ${suka.length}</span></button><button onclick="fokusKomen('${w.id}')">${ikonKomen()}<span>Komentar ${komen.length}</span></button></div>
       <div id="komen-${w.id}">${komen.map((k) => { const kp = semua[k.user_id] || { display_name: "?", avatar_color: "#888" }; return `<div class="komentar"><b>${esc(kp.display_name)}</b> <span class="muted">${waktuRelatif(k.created_at)}</span>${k.user_id === me.id ? ` <button class="tombol kecil abu" onclick="mulaiEditKomen('${k.id}')">Ubah</button>` : ""}<div class="teks" id="teksKomen-${k.id}">${esc(k.body)}</div></div>`; }).join("")}</div>
       <div class="komen-form"><input id="inKomen-${w.id}" placeholder="Tulis komentar…" maxlength="500" onkeydown="if(event.key==='Enter')kirimKomenUI('${w.id}')"><button onclick="kirimKomenUI('${w.id}')">Kirim</button></div>
