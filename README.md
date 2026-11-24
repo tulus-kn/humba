@@ -25,10 +25,10 @@ Jejaring sosial nostalgia ala Facebook 2009, tersambung ke Supabase supaya akun 
 
 ## Repo GitHub (sekali saja, pemilik)
 
-> Repo belum ada — file di sini masih lokal saja.
+> Repo sudah ada: https://github.com/tulus-kn/humba — live di https://tulus-kn.github.io/humba/ dan https://humba-8x9.pages.dev/
 
 1. Buka GitHub → New repository → nama **`humba`**, pilih **Public**, **jangan** centang "Add a README" (repo harus kosong).
-2. Beri tahu saya begitu repo dibuat, lalu saya push semua file ini (`index.html`, `supabase/schema.sql`, `README.md`) ke `main` dan aktifkan GitHub Pages supaya live di `https://tulus-kn.github.io/humba/`.
+2. Repo sudah dibuat dan live (lihat di atas). Push selanjutnya langsung ke `main`, GitHub Pages dan Cloudflare Pages ikut deploy otomatis.
 
 ## Langkah sekali saja (pemilik, di dashboard Supabase)
 
@@ -43,7 +43,9 @@ Jejaring sosial nostalgia ala Facebook 2009, tersambung ke Supabase supaya akun 
 5. **Mengaktifkan foto profil & sampul (supaya tersimpan antar HP): SQL Editor → New query → tempel seluruh isi file `supabase/migrasi-foto-profil.sql` → Run.** File ini hanya menambah dua kolom (`avatar_url`, `cover_url`) di tabel `humba_profiles` (tidak menyentuh tabel lain, tidak mengubah RLS). Tanpa langkah ini, foto tetap bisa diganti dalam Mode Lokal (tersimpan di HP itu), tapi di cloud tampil pesan "jalankan supabase/migrasi-foto-profil.sql" — aplikasi tidak crash.
 6. **Kunci anon SUDAH tertanam** di dalam aplikasi (`index.html`, `DEFAULT_ANON_KEY`). Pengguna tidak perlu menempel kunci apa pun — buka aplikasi dan langsung daftar.
 
-6. **Mengaktifkan foto & video di status (supaya tersimpan antar HP): SQL Editor → New query → tempel seluruh isi file `supabase/migrasi-foto-video-status.sql` → Run.** File ini hanya menambah dua kolom (`image_url`, `video_url`) di tabel `humba_posts` dan melonggarkan aturan supaya status boleh hanya foto/video tanpa teks. Tanpa langkah ini, status berfoto/video tetap jalan dalam Mode Lokal, tapi di cloud gagal dengan pesan migrasi — aplikasi tidak crash.
+6. **Mengaktifkan perbaikan keamanan (wajib, satu kali): SQL Editor → New query → tempel seluruh isi file `supabase/migrasi-perbaikan-keamanan.sql` → Run.** File ini memperbaiki policy teman (hanya penerima yang boleh menerima), pesan (penerima boleh menandai dibaca), dan dinding (hanya teman yang boleh menulis).
+
+7. **Mengaktifkan foto & video di status (supaya tersimpan antar HP): SQL Editor → New query → tempel seluruh isi file `supabase/migrasi-foto-video-status.sql` → Run.** File ini hanya menambah dua kolom (`image_url`, `video_url`) di tabel `humba_posts` dan melonggarkan aturan supaya status boleh hanya foto/video tanpa teks. Tanpa langkah ini, status berfoto/video tetap jalan dalam Mode Lokal, tapi di cloud gagal dengan pesan migrasi — aplikasi tidak crash.
 
 ## Cara pakai (pengguna)
 
@@ -55,5 +57,5 @@ Jejaring sosial nostalgia ala Facebook 2009, tersambung ke Supabase supaya akun 
 
 - Butuh internet: aplikasi memuat Supabase lewat CDN dan menyimpan data di Supabase.
 - Sinkron antar HP **belum teruji end-to-end dari server pembuat** (domain `*.supabase.co` diblokir dari sana). Uji penentunya: daftar 2 akun berbeda di 2 HP, tambah teman, kirim pesan, dan tulis status — semuanya harus muncul di HP satunya.
-- Online dihitung dari `last_seen` (offline setelah ~2 menit tidak aktif).
-- Tidak ada reset password mandiri: reset lewat dashboard Supabase → Authentication → Users.
+- Online dihitung dari `last_seen` (diperbarui tiap 60 detik selama aplikasi terbuka; offline setelah ~2 menit tidak aktif).
+- Ganti password bisa dari Pengaturan → Keamanan Akun. Yang tidak ada hanya **lupa password** (tidak ada reset lewat email): kalau lupa, reset lewat dashboard Supabase → Authentication → Users.

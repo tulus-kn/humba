@@ -510,7 +510,7 @@ async function daftar(){
   const nama = ($("inNama").value || "").trim();
   const pass = $("inPass").value || "";
   const tgl = $("inTgl").value || null;
-  if (!USERNAME_OK.test(username)) { infoAuth(`<div class="pesan-info merah">Username harus 3–20 karakter: huruf kecil, angka, titik, atau _.</div>`); return; }
+  if (!USERNAME_OK.test(username) || username.startsWith(".") || username.endsWith(".") || username.includes("..")) { infoAuth(`<div class="pesan-info merah">Username harus 3–20 karakter: huruf kecil, angka, titik, atau _. Tidak boleh diawali/diakhiri titik atau memakai titik berurutan.</div>`); return; }
   if (nama.length < 2 || nama.length > 32) { infoAuth(`<div class="pesan-info merah">Nama tampilan 2–32 karakter.</div>`); return; }
   if (pass.length < 6) { infoAuth(`<div class="pesan-info merah">Password minimal 6 karakter.</div>`); return; }
   const btn = $("btnDaftar"); btn.disabled = true; btn.textContent = "Mendaftar…";
@@ -572,6 +572,7 @@ async function keluar(e){
   try { if (mode === "cloud" && sb) await sb.auth.signOut(); } catch(e){}
   me = null; sesiLokal = null;
   try { localStorage.removeItem("ch.sesi"); } catch(e){}
+  if (heartbeatTimer) { clearInterval(heartbeatTimer); heartbeatTimer = null; }
   if (chRealtime) { try { sb.removeChannel(chRealtime); } catch(e){} chRealtime = null; }
   tampilAuth();
 }
@@ -722,7 +723,19 @@ async function hitungSuka(postId){
 /* ---------- Tampilan utama ---------- */
 let view = "beranda", profilLihat = null, grupBuka = null, chatDengan = null, catatanBuka = null, hasilCari = [];
 let chRealtime = null;
+let heartbeatTimer = null;
+function mulaiHeartbeat(){
+  if (heartbeatTimer) clearInterval(heartbeatTimer);
+  heartbeatTimer = setInterval(async () => {
+    try {
+      if (!me) return;
+      if (mode === "cloud" && sb) await sb.from("humba_profiles").update({ last_seen: sekarang() }).eq("id", me.id);
+      else if (mode === "local") { const d = dbLokal(); const u = d.users.find((x) => x.id === me.id); if (u) { u.last_seen = sekarang(); simpanLokal(d); } }
+    } catch(e){}
+  }, 60000);
+}
 function masukAplikasi(){
+  mulaiHeartbeat();
   $("layarAuth").style.display = "none"; $("layarApp").style.display = "block";
   $("namaTop").textContent = me.display_name;
   profilLihat = me.id; grupBuka = null; chatDengan = null; catatanBuka = null;
@@ -817,7 +830,7 @@ async function renderPanelKanan(){
     const semua = await semuaProfil();
     const online = semua.filter((p) => p.id !== me.id && p.last_seen && (Date.now() - new Date(p.last_seen).getTime() < 120000));
     $("panelOnline").innerHTML = online.length
-      ? online.map((p) => `<div class="baris-tengah" style="margin-bottom:8px">${avatarHtml(p, "kecil")}<div style="flex:1;min-width:0"><a href="#" onclick="lihatProfil('${p.id}');return false">${esc(p.display_name)}</a><div class="muted"><span class="dot on"></span> Online</div></div><button class="tombol kecil" onclick="pokeDariPanel('${p.id}','${esc(p.display_name)}')">Poke</button></div>`).join("")
+      ? online.map((p) => `<div class="baris-tengah" style="margin-bottom:8px">${avatarHtml(p, "kecil")}<div style="flex:1;min-width:0"><a href="#" onclick="lihatProfil('${p.id}');return false">${esc(p.display_name)}</a><div class="muted"><span class="dot on"></span> Online</div></div><button class="tombol kecil" onclick="pokeDariPanel('${p.id}')">Poke</button></div>`).join("")
       : `<span class="muted">Tidak ada teman yang online.</span>`;
     const kini = new Date(); const ultah = semua.filter((p) => p.birthdate).map((p) => ({ p, jarak: jarakUltah(p.birthdate, kini) })).filter((x) => x.jarak >= 0 && x.jarak <= 30).sort((a, b) => a.jarak - b.jarak);
     $("panelUltah").innerHTML = ultah.length
@@ -825,7 +838,7 @@ async function renderPanelKanan(){
       : `<span class="muted">Tidak ada ulang tahun dalam 30 hari ke depan.</span>`;
     const pokes = await ambilPokeMasuk();
     $("panelPoke").innerHTML = pokes.length
-      ? (await Promise.all(pokes.map(async (pk) => { const p = await profilDariId(pk.from_id); return p ? `<div style="margin-bottom:6px">👆 <b>${esc(p.display_name)}</b> me-poke kamu (${waktuRelatif(pk.created_at)}) <button class="tombol kecil" onclick="pokeDariPanel('${p.id}','${esc(p.display_name)}')">Poke balik</button></div>` : ""; }))).join("")
+      ? (await Promise.all(pokes.map(async (pk) => { const p = await profilDariId(pk.from_id); return p ? `<div style="margin-bottom:6px">👆 <b>${esc(p.display_name)}</b> me-poke kamu (${waktuRelatif(pk.created_at)}) <button class="tombol kecil" onclick="pokeDariPanel('${p.id}')">Poke balik</button></div>` : ""; }))).join("")
       : `<span class="muted">Tidak ada poke.</span>`;
   } catch(e){}
 }
@@ -836,7 +849,9 @@ function jarakUltah(birthdate, kini){
   if (jarak < 0) { t = new Date(thn + 1, b.getMonth(), b.getDate()); jarak = Math.floor((t - kini) / 86400000); }
   return jarak;
 }
-async function pokeDariPanel(id, nama){ await kirimPoke(id, nama); renderPanelKanan(); }
+async function pokeDariPanel(id){ const p = await profilDariId(id); await kirimPoke(id, p ? p.display_name : "teman"); renderPanelKanan(); }
+// Gaya sampul yang aman: hanya data:image/* yang dipakai, karakter berbahaya dibuang.
+function gayaSampul(u){ if (!u || typeof u !== "string" || !u.startsWith("data:image/")) return ""; return `background-image:url("${u.replace(/["'()\\]/g, "")}")`; }
 async function lihatProfil(id){ profilLihat = id; tampil("profil"); }
 function tulisCepat(){ tampil("beranda").then(() => { const el = $("inStatus"); if (el) { el.focus(); el.scrollIntoView({ block: "center", behavior: "smooth" }); } }); }
 
@@ -992,7 +1007,7 @@ async function renderTeman(t){
   const tombolUntuk = (p) => {
     const r = relasi.find((f) => idTemanLain(f) === p.id);
     if (!r) return `<button class="tombol kecil" onclick="tambahTemanUI('${p.id}')">+ Teman</button>`;
-    if (r.status === "accepted") return `<button class="tombol kecil abu" onclick="bukaChat('${p.id}')">Pesan</button> <button class="tombol kecil" onclick="pokeDariPanel('${p.id}','${esc(p.display_name)}')">Poke</button>`;
+    if (r.status === "accepted") return `<button class="tombol kecil abu" onclick="bukaChat('${p.id}')">Pesan</button> <button class="tombol kecil" onclick="pokeDariPanel('${p.id}')">Poke</button>`;
     if (r.requester_id === me.id) return `<span class="muted">Permintaan terkirim</span>`;
     return `<button class="tombol kecil hijau" onclick="jawabTemanUI('${r.id}',true)">Terima</button> <button class="tombol kecil abu" onclick="jawabTemanUI('${r.id}',false)">Tolak</button>`;
   };
@@ -1004,7 +1019,7 @@ async function renderTeman(t){
   ${masuk.length ? `<div class="kartu"><h2>Permintaan Pertemanan (${masuk.length})</h2>${masuk.map((f) => { const p = semua[f.requester_id]; return p ? kartuOrang(p, `<button class="tombol kecil hijau" onclick="jawabTemanUI('${f.id}',true)">Terima</button> <button class="tombol kecil abu" onclick="jawabTemanUI('${f.id}',false)">Tolak</button>`) : ""; }).join("")}</div>` : ""}
   ${keluar.length ? `<div class="kartu"><h2>Permintaan Terkirim (${keluar.length})</h2>${keluar.map((f) => { const p = semua[f.addressee_id]; return p ? kartuOrang(p, `<span class="muted">Menunggu jawaban</span>`) : ""; }).join("")}</div>` : ""}
   <div class="kartu"><h2>Teman Saya (${diterima.length})</h2>
-    ${diterima.length ? diterima.map((f) => { const p = semua[idTemanLain(f)]; return p ? kartuOrang(p, `<button class="tombol kecil abu" onclick="bukaChat('${p.id}')">Pesan</button> <button class="tombol kecil" onclick="pokeDariPanel('${p.id}','${esc(p.display_name)}')">Poke</button>`) : ""; }).join("") : `<p class="muted">Belum ada teman. Cari username temanmu di atas lalu tambah.</p>`}
+    ${diterima.length ? diterima.map((f) => { const p = semua[idTemanLain(f)]; return p ? kartuOrang(p, `<button class="tombol kecil abu" onclick="bukaChat('${p.id}')">Pesan</button> <button class="tombol kecil" onclick="pokeDariPanel('${p.id}')">Poke</button>`) : ""; }).join("") : `<p class="muted">Belum ada teman. Cari username temanmu di atas lalu tambah.</p>`}
   </div>
   <div class="kartu"><h2>Semua Pengguna</h2>
     ${(await semuaProfil()).filter((p) => p.id !== me.id).slice(0, 30).map((p) => kartuOrang(p, tombolUntuk(p))).join("") || `<p class="muted">Belum ada pengguna lain.</p>`}
@@ -1027,8 +1042,8 @@ async function renderProfil(t, userId){
   t.innerHTML = `
   <div class="kartu">
     ${saya
-      ? `<div class="sampul ${p.cover_url ? "" : "kosong"}" ${p.cover_url ? `style="background-image:url('${esc(p.cover_url)}')"` : ""} onclick="pilihFoto('sampul')">${p.cover_url ? `<button class="ganti-sampul" onclick="event.stopPropagation();pilihFoto('sampul')">📷 Ganti Sampul</button>` : `<span>📷 Ketuk untuk pasang foto sampul</span>`}</div>`
-      : (p.cover_url ? `<div class="sampul" style="background-image:url('${esc(p.cover_url)}')"></div>` : "")}
+      ? `<div class="sampul ${p.cover_url ? "" : "kosong"}" ${p.cover_url ? `style="${gayaSampul(p.cover_url)}"` : ""} onclick="pilihFoto('sampul')">${p.cover_url ? `<button class="ganti-sampul" onclick="event.stopPropagation();pilihFoto('sampul')">📷 Ganti Sampul</button>` : `<span>📷 Ketuk untuk pasang foto sampul</span>`}</div>`
+      : (p.cover_url ? `<div class="sampul" style="${gayaSampul(p.cover_url)}"></div>` : "")}
     <div class="baris" style="margin-top:12px">${saya ? `<span class="foto-profil-wrap" onclick="pilihFoto('profil')" title="Ketuk untuk ganti foto profil">${avatarHtml(p, "besar")}<span class="lencana-kamera">📷</span></span>` : avatarHtml(p, "besar")}
       <div style="flex:1;min-width:0">
         <h2 style="margin-bottom:2px">${esc(p.display_name)}</h2>
@@ -1038,7 +1053,7 @@ async function renderProfil(t, userId){
         ${saya ? `<div class="stat-baris"><div><b>${temanIds.length}</b>Teman</div><div><b>${wall.length}</b>Kiriman</div></div>` : ""}
         <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
           ${saya ? `<button class="tombol kecil" onclick="editProfilUI()">Ubah Profil</button>` : ""}
-          ${!saya ? `<button class="tombol kecil" onclick="tambahTemanUI('${p.id}')">+ Teman</button> <button class="tombol kecil abu" onclick="bukaChat('${p.id}')">Pesan</button> <button class="tombol kecil" onclick="pokeDariPanel('${p.id}','${esc(p.display_name)}')">Poke</button>` : ""}
+          ${!saya ? `<button class="tombol kecil" onclick="tambahTemanUI('${p.id}')">+ Teman</button> <button class="tombol kecil abu" onclick="bukaChat('${p.id}')">Pesan</button> <button class="tombol kecil" onclick="pokeDariPanel('${p.id}')">Poke</button>` : ""}
         </div>
       </div>
     </div>
@@ -1052,10 +1067,10 @@ async function renderProfil(t, userId){
   </div>
   <div class="kartu">
     <h2>Dinding ${esc(p.display_name)}</h2>
-    <div class="komposer">
+    ${adalahTeman ? `<div class="komposer">
       <textarea id="inWall" placeholder="Tulis sesuatu di dinding ${esc(p.display_name)}…" maxlength="2000"></textarea>
       <div style="text-align:right;margin-top:8px"><button class="tombol kecil" onclick="bagikanWall('${p.id}')">Tulis di Dinding</button></div>
-    </div>
+    </div>` : `<p class="muted">Hanya teman yang bisa menulis di dinding ini. Tambah teman dulu.</p>`}
     <div id="daftarWall">${wall.length ? "" : `<p class="muted" style="margin-top:10px">Belum ada tulisan di dinding ini.</p>`}</div>
   </div>`;
   for (const w of wall) {
@@ -1514,7 +1529,7 @@ async function renderPesan(t){
     await tandaiDibaca(chatDengan); hitungBelumDibaca();
     html += `<div class="kartu"><button class="tombol kecil abu" onclick="chatDengan=null;tampil('pesan')">← Semua Pesan</button>
       <div class="baris-tengah" style="margin-top:10px">${avatarHtml(lawan)}<div><div class="nama">${esc(lawan.display_name)}</div><div class="muted">@${esc(lawan.username)}</div></div>
-      <span style="margin-left:auto"><button class="tombol kecil" onclick="pokeDariPanel('${lawan.id}','${esc(lawan.display_name)}')">Poke</button></span></div>
+      <span style="margin-left:auto"><button class="tombol kecil" onclick="pokeDariPanel('${lawan.id}')">Poke</button></span></div>
     </div>
     <div class="kartu"><div class="chat-wrap"><div class="chat-area" id="areaChat">
       ${riwayat.length ? riwayat.map((m) => `<div class="gelembung ${m.sender_id === me.id ? "kirim" : "terima"}">${esc(m.body)}<div class="waktu">${jamSingkat(m.created_at)}</div></div>`).join("") : `<p class="muted tengah">Belum ada pesan. Sapa ${esc(lawan.display_name)}!</p>`}
@@ -1556,7 +1571,7 @@ async function renderSaya(t){
     disimpan: "Kamu belum menyimpan catatan apa pun."
   }[tabSaya];
   let html = `<div class="kartu">
-    <div class="sampul ${me.cover_url ? "" : "kosong"}" ${me.cover_url ? `style="background-image:url('${esc(me.cover_url)}')"` : ""} onclick="pilihFoto('sampul')">${me.cover_url ? `<button class="ganti-sampul" onclick="event.stopPropagation();pilihFoto('sampul')">📷 Ganti Sampul</button>` : `<span>📷 Ketuk untuk pasang foto sampul</span>`}</div>
+    <div class="sampul ${me.cover_url ? "" : "kosong"}" ${me.cover_url ? `style="${gayaSampul(me.cover_url)}"` : ""} onclick="pilihFoto('sampul')">${me.cover_url ? `<button class="ganti-sampul" onclick="event.stopPropagation();pilihFoto('sampul')">📷 Ganti Sampul</button>` : `<span>📷 Ketuk untuk pasang foto sampul</span>`}</div>
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-top:12px">
       <button class="tombol kecil abu" onclick="bukaDrawer(event)">☰ Menu</button>
       <button class="tombol kecil" onclick="tampil('profil')">Edit Profil</button>
