@@ -17,7 +17,11 @@ Jejaring sosial nostalgia ala Facebook 2009, tersambung ke Supabase supaya akun 
 - **Pesan Masuk:** chat pribadi antar pengguna.
 - **Poke:** poke teman dan poke balik.
 - **Sedang Online** (aktif dalam 2 menit terakhir) dan **Ulang Tahun** (30 hari ke depan).
+- **Tampilan ala RedNote (tema gelap):** bottom nav Beranda / Toko / + / Pesan / Saya; Beranda bertab Mengikuti / Jelajah / Terdekat (grid 2 kolom, klik kartu untuk detail status, suka, komentar, simpan); drawer menu (Tambah Teman, Creator Center, Draft, Riwayat, Pesanan, Keranjang, Dompet, Panduan Komunitas, Bantuan, Pengaturan).
+- **Toko (Market):** grid barang, kategori, cari, Pasang Barang (nama, harga Rp, keterangan, lokasi, no. WA), detail barang dengan tombol "Hubungi via WA" dan "Chat di HUMBA", Keranjang, Wishlist, Pesanan, dan Dompet (semua Rp 0 — HUMBA bukan pembayaran sungguhan).
+- **Saya:** profil + angka Mengikuti / Pengikut / Suka & Simpan, tab Catatan / Suka / Disimpan, Riwayat, dan Statistik (Creator Center, dihitung dari data asli saja — tanpa views karangan).
 - **Mode Lokal (demo):** kalau Supabase belum dikonfigurasi, aplikasi tetap jalan dengan data yang tersimpan hanya di HP/browser itu — diberi label yang jelas.
+- **Draft & Riwayat:** teks status yang belum terkirim tersimpan otomatis (Draft); status yang pernah dibuka tercatat di Riwayat (maksimal 50).
 
 ## Repo GitHub (sekali saja, pemilik)
 
@@ -35,6 +39,7 @@ Jejaring sosial nostalgia ala Facebook 2009, tersambung ke Supabase supaya akun 
    - Kalau muncul peringatan "destructive operations", aman: file ini hanya `CREATE TABLE IF NOT EXISTS` dan `DROP POLICY` (tidak ada `DROP TABLE`, tidak menghapus data).
    - Semua tabel memakai prefix `humba_` (`humba_profiles`, `humba_posts`, …) supaya tidak bentrok dengan tabel Andi Kore (`profiles`) dan Pos-El (`posel_*`).
 3. **Authentication → Settings → "Confirm email" SUDAH mati** (akun memakai email buatan, jadi konfirmasi email tidak akan pernah sampai). Tidak perlu diubah lagi.
+4. **Mengaktifkan Toko (opsional, kalau mau jualan antar HP): SQL Editor → New query → tempel seluruh isi file `supabase/migrasi-toko.sql` → Run.** File ini hanya menambah tabel `humba_produk` (tidak menyentuh tabel lama). Tanpa langkah ini, Toko tetap jalan dalam Mode Lokal (produk hanya di HP itu) dan di cloud tampil pesan "jalankan supabase/migrasi-toko.sql" — aplikasi tidak crash.
 4. **Kunci anon SUDAH tertanam** di dalam aplikasi (`index.html`, `DEFAULT_ANON_KEY`). Pengguna tidak perlu menempel kunci apa pun — buka aplikasi dan langsung daftar.
 
 ## Cara pakai (pengguna)
