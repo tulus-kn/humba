@@ -14,8 +14,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - name: Periksa sintaks JavaScript di index.html
+      - name: Periksa sintaks JavaScript di app.js
         run: |
-          python3 -c "import re, pathlib; t = pathlib.Path('index.html').read_text(); s = re.findall(r'<script>(.*?)</script>', t, re.S); open('/tmp/app.js','w').write(s[-1])"
-          node --check /tmp/app.js
+          node --check app.js
           echo "Sintaks JavaScript OK"
