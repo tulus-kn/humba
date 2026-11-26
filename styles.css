@@ -267,11 +267,6 @@ details.supabase input{background:#26262b;color:var(--teks);border-color:#3a3a40
 .dompet-merah .total{font-size:28px;font-weight:800;margin-top:4px}
 .kotak-merah{background:var(--merah);color:#fff;border-radius:14px;padding:14px;text-align:center;font-weight:700;margin-bottom:10px}
 
-/* Layar besar (tablet/desktop): bingkai dilebarkan, HP tetap 560px */
-@media (min-width:768px){
-.bingkai,.sekitar,#navKiri,.sheet{max-width:720px}
-}
-@media (min-width:1024px){
-.bingkai,.sekitar,#navKiri,.sheet{max-width:880px}
-}
+/* Semua layar: bingkai mengikuti lebar layar masing-masing pengguna */
+.bingkai,.sekitar,#navKiri,.sheet{max-width:none}
 
